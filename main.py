@@ -13,6 +13,8 @@ from kivy import utils
 from kivymd.toast import toast
 from kivyauth.google_auth import initialize_google, login_google, logout_google
 
+import GoogleKeys
+
 Window.keyboard_anim_args = {"d": .2, "t": "linear"}
 Window.softinput_mode = "below_target"
 Clock.max_iteration = 250
@@ -104,7 +106,9 @@ class MainApp(MDApp):
         logout_google(self.erro_login)
 
     def build(self):
-        initialize_google(self.after_login, self.erro_login, client_id='240132364342-bpp6asa19iec10cvl67f6vujghin6e44.apps.googleusercontent.com', client_secret="vAoceO8PdEh84fD81YsXs9tq")
+        initialize_google(self.after_login, self.erro_login,
+                          client_id=GoogleKeys.client_id,
+                          client_secret=GoogleKeys.client_secret)
         self.theme_cls.material_style = "M3"
 
 

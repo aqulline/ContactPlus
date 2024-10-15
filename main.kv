@@ -36,11 +36,45 @@ ScreenManager:
                 radius: [25, 25, 25, 25]
                 on_release:
                     app.login()
+    MDScreen:
+        name:"home"
+        md_bg_color:"#eaf4f4"
+        MDBoxLayout:
+            orientation:"vertical"
+            spacing:dp("10")
+            MDTopAppBar:
+	            title: "Contacts"
+	            elevation: 0
+	            md_bg_color: "#eaf4f4"
+	            specific_text_color: "black"
+	            right_action_items: [["account-plus", lambda x: app.add_from_contact()]]
+            RecycleView:
+                id:contact
+                key_viewclass: 'viewclass'
+                key_size: 'height'
+                RecycleBoxLayout:
+                    id:wali
+                    spacing:dp(10)
+                    padding: dp(10)
+                    default_size: None, dp(70)
+                    default_size_hint: 1, None
+                    size_hint_y: None
+                    height: self.minimum_height
+                    orientation:"vertical"
 
-            # Spinner for loading feedback (can be hidden initially)
-            MDSpinner:
-                size_hint: None, None
-                size: dp(46), dp(46)
-                pos_hint: {"center_x": .5, "center_y": .3}
-                active: False  # Set to True on button click to show feedback
-                color: "#0B4F6C"
+    MDScreen:
+        name:"profile"
+        MDBoxLayout:
+            orientation:"vertical"
+            spacing:dp("10")
+            MDTopAppBar:
+	            title: "Contacts"
+	            elevation: 0
+	            md_bg_color: "#eaf4f4"
+	            specific_text_color: "black"
+			MDFloatLayout:
+
+<Contacts>:
+	text: root.name
+	ImageLeftWidget:
+	    source:root.image

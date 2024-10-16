@@ -264,6 +264,7 @@ ScreenManager:
 
             # Profile Card
             MDFloatLayout:
+
                 MDCard:
 #                    md_bg_color: "#eaf4f4"
                     orientation: "vertical"
@@ -306,6 +307,22 @@ ScreenManager:
                         font_style: "Caption"
                         theme_text_color: "Hint"
                         pos_hint: {"center_x": 0.5}
+                MDFloatingActionButton:
+                    icon: "qrcode-scan"
+                    type:"small"
+                    md_bg_color:"white"
+                    text_color:"black"
+                    pos_hint:{"center_x":.87, "center_y":.92}
+                    on_release:
+                        app.screen_capture("sell")
+                MDFloatingActionButton:
+                    icon: "qrcode"
+                    type:"small"
+                    md_bg_color:"white"
+                    text_color:"black"
+                    pos_hint:{"center_x":.13, "center_y":.92}
+                    on_release:
+                        app.show_qrcode_dialog()
 
                 # Social Accounts Card
                 MDCard:
@@ -431,3 +448,33 @@ ScreenManager:
         theme_text_color: "Secondary"
         halign: "left"
 
+<QRCodeDialog>:
+    orientation: "vertical"
+    size_hint_y: None
+    height: dp(400)  # Adjust height to accommodate profile picture
+    padding: dp(20)
+    spacing: dp(10)
+
+    # User's Profile Picture at the top
+    FitImage:
+        source: app.user_pic  # Dynamic path to user's profile picture
+        size_hint: None, None
+        size: dp(100), dp(100)
+        pos_hint: {"center_x": 0.5}
+        radius: [50, 50, 50, 50]  # Rounded profile picture
+
+    # User's Name below the profile picture
+    MDLabel:
+        text: app.user_name  # Dynamic username goes here
+        font_style: "H5"
+        halign: "center"
+        theme_text_color: "Primary"
+        size_hint_y: None
+        height: dp(50)
+
+    # QR Code Image below the user's name
+    FitImage:
+        source: app.user_qrcode  # Dynamic path to QR code image
+        size_hint: None, None
+        size: dp(200), dp(200)
+        pos_hint: {"center_x": 0.5}

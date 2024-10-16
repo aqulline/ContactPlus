@@ -49,23 +49,74 @@ class FirebaseManager:
             # Handle any exception that occurs during the registration process
             return {"status": "error", "code": 500, "message": f"An error occurred: {str(e)}"}
 
-    def add_contact(self, user_id, new_contact_data):
+    def fetch_user_info(self, user_id):
         self.initialize_firebase()  # Ensure Firebase is initialized
+        if not self.app_initialized:
+            return {
+                "status": "error",
+                "code": 500,
+                "message": "Firebase initialization failed"
+            }
+
+        try:
+            # Reference to the user's general information in the database
+            user_ref = db.reference("ContactP").child("Users").child(user_id).child('User_info')
+
+            # Fetch the user information
+            user_info = user_ref.get()
+
+            # Check if the user exists
+            if user_info:
+                return {
+                    "status": "success",
+                    "code": 200,
+                    "message": "User information fetched successfully",
+                    "data": user_info
+                }
+            else:
+                return {
+                    "status": "error",
+                    "code": 404,
+                    "message": "User not found"
+                }
+
+        except Exception as e:
+            # Handle any exception that occurs during the fetching process
+            return {
+                "status": "error",
+                "code": 500,
+                "message": f"An error occurred: {str(e)}"
+            }
+
+    def add_contact(self, user_id, scanned_contact):
+        # Fetch the new contact's information
+        new_contact_data = self.fetch_user_info(scanned_contact)
+
+        # If the contact doesn't exist, return an error
+        if new_contact_data['code'] != 200:
+            return {"status": "error", "code": 404, "message": "User not found"}
+
+        # Initialize Firebase (ensure it is initialized)
+        self.app_initialized = False
+        self.initialize_firebase()
+
+        # If Firebase initialization failed, return an error
         if not self.app_initialized:
             return {"status": "error", "code": 500, "message": "Firebase initialization failed"}
 
         try:
-            # Reference to the user data in the database
-            user_ref = db.reference("ContactP").child("Users").child(user_id).child('Contacts').child(new_contact_data['sub'])
+            # Reference to the user's Contacts node in the database
+            user_ref = db.reference("ContactP").child("Users").child(user_id).child('Contacts').child(
+                new_contact_data['data']['sub'])
 
-            # Store user data
-            user_ref.set(new_contact_data)
+            # Store the new contact's data
+            user_ref.set(new_contact_data['data'])
 
             # Return success status
             return {"status": "success", "code": 200, "message": "Contact added successfully"}
 
         except Exception as e:
-            # Handle any exception that occurs during the registration process
+            # Handle any exception that occurs during the contact addition process
             return {"status": "error", "code": 500, "message": f"An error occurred: {str(e)}"}
 
     def fetch_contacts(self, user_id):
@@ -236,6 +287,10 @@ class FirebaseManager:
 # print(x)
 # x = FirebaseManager.fetch_contacts(FirebaseManager(), '114248626444216198151')
 # print(x)
-# FirebaseManager.add_contact(FirebaseManager(), '114248626444216198151', data)
+# vv = FirebaseManager.add_contact(FirebaseManager(), '114248626444216198151', '114248626444216198151')
+# print(vv)
 # x = FirebaseManager.fetch_account_info(FirebaseManager(), '114248626444216198151', "phone")
 # print(x)
+# x = FirebaseManager.fetch_user_info(FirebaseManager(), '114248626444216198151')
+# print(x)
+

@@ -3,6 +3,7 @@ import os
 import threading
 from time import sleep
 
+import qrcode
 from kivy.base import EventLoop
 from kivy.properties import NumericProperty, StringProperty, DictProperty, ListProperty, BooleanProperty
 from kivymd.app import MDApp
@@ -41,12 +42,15 @@ class Spin(MDBoxLayout):
 class View_account_details(MDBoxLayout):
     pass
 
+class QRCodeDialog(MDBoxLayout):
+    pass
 
 class MainApp(MDApp):
     # app
     size_x, size_y = Window.size
     dialog_spin = None
     account_dialog = None
+    qr_dialog = None
 
     # screen
     screens = ['home']
@@ -59,6 +63,7 @@ class MainApp(MDApp):
     user_name = StringProperty("")
     user_email = StringProperty("")
     user_pic = StringProperty("")
+    user_qrcode = StringProperty("")
 
     # link preview
     link_image = StringProperty("https://lh5.googleusercontent.com/proxy/8b31I_Jtp3hRBSUVSubNHO_6KFNvldAStfeqKwAFUf22WOuDDBUlI1t26OW0ZadJr7LAXt0rbBoray3mARaiIM4-7Z-kUPpx")
@@ -126,7 +131,6 @@ class MainApp(MDApp):
         thr.start()
 
     def login_start(self):
-        print()
         Clock.schedule_once(lambda dt: self.add_contacts(), .1)
         Clock.schedule_once(lambda dt: self.dialog_spin.dismiss(), .1)
         Clock.schedule_once(lambda dt: self.screen_capture('home'), .1)
@@ -297,6 +301,38 @@ class MainApp(MDApp):
     
     """
 
+    """
+    
+        QRCODES FUCNTIONS
+    
+    """
+
+    def qr_code(self, id_gen):
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=10,
+            border=4,
+        )
+
+        qr.add_data(id_gen)
+        qr.make(fit=True)
+        img = qr.make_image(fill_color="#eaf4f4", back_color="white")
+        img.save(f"Qrcodes/{id_gen}.png")
+
+    def show_qrcode_dialog(self):
+        if not self.qr_dialog:
+            self.qr_dialog = MDDialog(
+                title="",
+                type="custom",
+                content_cls=QRCodeDialog(),
+            )
+        self.qr_dialog.open()
+
+    """
+        END OF QRCODES FUNCTIONS
+    
+    """
     def after_login(self, *args):
         Clock.schedule_once(lambda dt: self.screen_capture("home"), 0)
         self.user_data = args[0]
@@ -312,6 +348,7 @@ class MainApp(MDApp):
         with open(filename, 'w') as json_file:
             json.dump(self.user_data, json_file, indent=4)  # Using indent for pretty printing
 
+        self.qr_code(self.user_data['sub'])
         print(f"User information has been written to {filename}.")
 
     def erro_login(self, *args):
@@ -336,6 +373,7 @@ class MainApp(MDApp):
                     self.user_name = self.user_data['name']
                     self.user_email = self.user_data['email']
                     self.user_pic = self.user_data['picture']
+                    self.user_qrcode = f"Qrcodes/{self.user_id}.png"
                     # Optionally, you can call a function to proceed to the home screen
 
                     self.login_optimization()

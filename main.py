@@ -1,6 +1,7 @@
 import json
 import os
 import threading
+from platform import platform
 from time import sleep
 
 import qrcode
@@ -335,9 +336,14 @@ class MainApp(MDApp):
     """
     def after_login(self, *args):
         Clock.schedule_once(lambda dt: self.screen_capture("home"), 0)
-        self.user_data = args[0]
-        print(self.user_data)
-
+        print(args)
+        if utils.platform == 'android':
+            keys = ['sub', 'name', 'email', 'family_name', 'given_name',  'picture']
+            user_dict = dict(zip(keys, args))
+            self.user_data = user_dict
+        else:
+            self.user_data = args[0]
+            print(self.user_data)
         self.save_user_info_to_json()
 
     def save_user_info_to_json(self):
@@ -349,6 +355,7 @@ class MainApp(MDApp):
             json.dump(self.user_data, json_file, indent=4)  # Using indent for pretty printing
 
         self.qr_code(self.user_data['sub'])
+        self.login_optimization()
         print(f"User information has been written to {filename}.")
 
     def erro_login(self, *args):
@@ -392,8 +399,8 @@ class MainApp(MDApp):
 
     def build(self):
         initialize_google(self.after_login, self.erro_login,
-                          client_id=GoogleKeys.client_id,
-                          client_secret=GoogleKeys.client_secret)
+                          client_id=GoogleKeys.client_id2,
+                          client_secret=GoogleKeys.client_secret2)
         self.theme_cls.material_style = "M3"
 
 

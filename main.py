@@ -1,3 +1,8 @@
+import json
+import os
+import threading
+from time import sleep
+
 from kivy.base import EventLoop
 from kivy.properties import NumericProperty, StringProperty, DictProperty, ListProperty, BooleanProperty
 from kivymd.app import MDApp
@@ -6,7 +11,11 @@ from kivy.clock import Clock
 from kivy import utils
 from kivymd.toast import toast
 from kivyauth.google_auth import initialize_google, login_google, logout_google
+from kivymd.uix.boxlayout import MDBoxLayout
+from kivymd.uix.button import MDFlatButton
+from kivymd.uix.dialog import MDDialog
 from kivymd.uix.list import OneLineAvatarIconListItem
+import hyperlink_preview as HLP
 
 import GoogleKeys
 from database import FirebaseManager as FM
@@ -25,16 +34,40 @@ class Contacts(OneLineAvatarIconListItem):
     contact_id = StringProperty("")
 
 
+class Spin(MDBoxLayout):
+    pass
+
+
+class View_account_details(MDBoxLayout):
+    pass
+
+
 class MainApp(MDApp):
     # app
     size_x, size_y = Window.size
+    dialog_spin = None
+    account_dialog = None
 
     # screen
     screens = ['home']
     screens_size = NumericProperty(len(screens) - 1)
     current = StringProperty(screens[len(screens) - 1])
 
-    user_data = {}
+    # user info
+    user_data = DictProperty({})
+    user_id = StringProperty("")
+    user_name = StringProperty("")
+    user_email = StringProperty("")
+    user_pic = StringProperty("")
+
+    # link preview
+    link_image = StringProperty("https://lh5.googleusercontent.com/proxy/8b31I_Jtp3hRBSUVSubNHO_6KFNvldAStfeqKwAFUf22WOuDDBUlI1t26OW0ZadJr7LAXt0rbBoray3mARaiIM4-7Z-kUPpx")
+    link_title = StringProperty("")
+    link_url = StringProperty("")
+    link_description = StringProperty("")
+    link_site_name = StringProperty("")
+    link_domain = StringProperty("")
+
 
     def on_start(self):
         self.keyboard_hooker()
@@ -71,6 +104,34 @@ class MainApp(MDApp):
 
             request_permissions([Permission.READ_CONTACTS, Permission.WRITE_CONTACTS, ], callback)
 
+    def spin_dialog(self):
+        if not self.dialog_spin:
+            self.dialog_spin = MDDialog(
+                type="custom",
+                auto_dismiss=False,
+                size_hint=(.43, None),
+                content_cls=Spin(),
+            )
+        self.dialog_spin.open()
+
+
+    """
+        USER FUNCTIONS (CONTACTS)
+    
+    """
+
+    def login_optimization(self):
+        self.spin_dialog()
+        thr = threading.Thread(target=self.login_start)
+        thr.start()
+
+    def login_start(self):
+        print()
+        Clock.schedule_once(lambda dt: self.add_contacts(), .1)
+        Clock.schedule_once(lambda dt: self.dialog_spin.dismiss(), .1)
+        Clock.schedule_once(lambda dt: self.screen_capture('home'), .1)
+
+
     def add_contacts(self):
         # self.screen_capture("contacts")
         self.root.ids.contact.data = {}
@@ -91,6 +152,11 @@ class MainApp(MDApp):
                     }
                 )
                 index += 1
+
+
+            """
+            SCREEN FUNCTIONS
+            """
 
     def screen_capture(self, screen):
         sm = self.root
@@ -114,21 +180,177 @@ class MainApp(MDApp):
         self.current = self.screens[len(self.screens) - 1]
         self.screen_capture(self.current)
 
+    action_name = StringProperty("view")
+    account_link = StringProperty("#Empty")
+    account_name = StringProperty("")
+    account_id = StringProperty("")
+    edit_hint = StringProperty("Edit link")
+    edit_screen = StringProperty("edit_link")
+
+    def add_save_account(self):
+        FM.add_account(FM(), self.user_id, self.account_name, self.account_link)
+        self.screen_capture("profile")
+
+    def opt_preview(self):
+        thr = threading.Thread(target=self.preview_link)
+        thr.start()
+
+    def view_account_details(self, account_name):
+        data = FM.fetch_account_info(FM(), self.user_id, account_name)
+        print(data)
+        self.account_name = account_name
+        if data['code'] == 200:
+            if account_name == 'phone':
+                self.action_name = 'call'
+                self.edit_hint = "Enter phone"
+                self.edit_screen = "edit_phone"
+            data = data['data']
+            self.account_name = data['account_name']
+            self.account_link = data['account_link']
+            self.account_id = data['account_id']
+            self.show_account_dialog()
+        elif data['code'] == 404:
+            if account_name == 'phone':
+                self.action_name = 'call'
+                self.edit_hint = "Enter phone"
+                self.edit_screen = "edit_phone"
+            if account_name == 'whatsapp':
+                self.root.ids.link_field.text = "https://wa.me/255replacethiswithphone"
+            if account_name == 'instagram':
+                self.root.ids.link_field.text = "https://www.instagram.com/beast9060.aq"
+            if account_name == 'linkedin':
+                self.root.ids.link_field.text = "https://www.linkedin.com/in/enter_user_name_here_or_paste_link"
+            if account_name == 'twitter':
+                self.root.ids.link_field.text = "https://x.com/enter_user_name_here_or_paste_link"
+            if account_name == 'github':
+                self.root.ids.link_field.text = "https://github.com/enter_user_name_here_or_paste_link"
+            if account_name == 'web':
+                self.root.ids.link_field.text = "paste_your_web_link_here"
+            self.action_name = "#Empty"
+            self.account_link = "#Empty"
+            self.screen_capture(self.edit_screen)
+        else:
+            toast(data['message'])
+
+    def show_account_dialog(self):
+        if not self.account_dialog:
+            self.account_dialog = MDDialog(
+                title="View Details",
+                type="custom",
+                content_cls=View_account_details(),
+                buttons=[
+                    MDFlatButton(
+                        text="Edit",
+                        theme_text_color="Custom",
+                        text_color=self.theme_cls.primary_color,
+                        on_release=(lambda dt: self.edit_link_callback())
+                    ),
+                    MDFlatButton(
+                        text=self.action_name,
+                        theme_text_color="Custom",
+                        text_color=self.theme_cls.primary_color,
+                    ),
+                ],
+            )
+        self.account_dialog.open()
+
+    def edit_link_callback(self):
+        self.screen_capture(self.edit_screen)
+        self.root.ids.sms_edit.text = self.account_link
+        self.account_dialog.dismiss()
+
+    def preview_link(self):
+        try:
+            link = self.root.ids.link_field.text
+            hlp = HLP.HyperLinkPreview(url=str(link))
+            print(link)
+            if hlp.is_valid:
+                preview_data = hlp.get_data()
+                Clock.schedule_once(lambda dt: self.update_preview(preview_data), .1)
+
+        except Exception as e:
+            # Catch any errors that occur, such as network errors, invalid URLs, etc.
+            # Optionally, you can set default or error values for these fields if the link preview fails.
+            self.link_title = "Error"
+            self.link_image = str("https://lh5.googleusercontent.com/proxy/8b31I_Jtp3hRBSUVSubNHO_6KFNvldAStfeqKwAFUf22WOuDDBUlI1t26OW0ZadJr7LAXt0rbBoray3mARaiIM4-7Z-kUPpx")
+            self.link_url = str(None)
+            self.link_description = "None"
+            self.link_site_name = "Unknown"
+            self.link_domain = "Unknown"
+
+    def update_preview(self, link_data):
+        print(link_data)
+        # Make sure that each expected key exists in the link_data and handle any missing values
+        self.link_title = str(link_data.get('title', 'No Title'))
+        self.link_image = str(link_data.get('image', 'https://lh5.googleusercontent.com/proxy/8b31I_Jtp3hRBSUVSubNHO_6KFNvldAStfeqKwAFUf22WOuDDBUlI1t26OW0ZadJr7LAXt0rbBoray3mARaiIM4-7Z-kUPpx'))
+        self.link_url = str(link_data.get('url', 'No URL'))
+        self.link_description = str(link_data.get('description', 'No Description'))
+        self.link_site_name = str(link_data.get('site_name', 'No Site Name'))
+        self.link_domain = str(link_data.get('domain', 'No Domain'))
+    """
+        END OF SCREEN FUNCTIONS
+    """
+
+
+    """
+        GOOGLE AUTHENTICATION FUNCTIONS
+    
+    """
+
     def after_login(self, *args):
-        print("Hurray")
         Clock.schedule_once(lambda dt: self.screen_capture("home"), 0)
         self.user_data = args[0]
         print(self.user_data)
-        self.add_contacts()
+
+        self.save_user_info_to_json()
+
+    def save_user_info_to_json(self):
+        # Define the filename
+        filename = 'user_info.json'
+
+        # Write user data to the JSON file
+        with open(filename, 'w') as json_file:
+            json.dump(self.user_data, json_file, indent=4)  # Using indent for pretty printing
+
+        print(f"User information has been written to {filename}.")
 
     def erro_login(self, *args):
         print("Booo!!")
 
     def login(self):
+        # Define the filename for the user info
+        filename = 'user_info.json'
+
+        # Check if the file exists
+        if os.path.exists(filename):
+            # Read the user info from the JSON file
+            with open(filename, 'r') as json_file:
+                user_data = json.load(json_file)
+                # Assuming the user data has an email field
+                user_email = user_data.get('email')
+                if user_email:
+                    print(f"User found: {user_email}")
+                    self.user_data = user_data
+                    print(self.user_data)
+                    self.user_id = self.user_data['sub']
+                    self.user_name = self.user_data['name']
+                    self.user_email = self.user_data['email']
+                    self.user_pic = self.user_data['picture']
+                    # Optionally, you can call a function to proceed to the home screen
+
+                    self.login_optimization()
+                    return
+
+        # If the user is not in the file, proceed with Google login
         login_google()
 
     def logout(self):
         logout_google(self.erro_login)
+
+    """
+        END OF GOOGLE AUTHENTICATION FUNCTIONS
+    
+    """
 
     def build(self):
         initialize_google(self.after_login, self.erro_login,

@@ -37,44 +37,397 @@ ScreenManager:
                 on_release:
                     app.login()
     MDScreen:
-        name:"home"
-        md_bg_color:"#eaf4f4"
+        name: "home"
+        md_bg_color: "#eaf4f4"
         MDBoxLayout:
-            orientation:"vertical"
-            spacing:dp("10")
+            orientation: "vertical"
+            spacing: dp("10")
             MDTopAppBar:
-	            title: "Contacts"
-	            elevation: 0
-	            md_bg_color: "#eaf4f4"
-	            specific_text_color: "black"
-	            right_action_items: [["account-plus", lambda x: app.add_from_contact()]]
+                title:"Contacts"
+                elevation: 0
+                md_bg_color: "#eaf4f4"
+                specific_text_color: "black"
+                right_action_items: [["account-circle-outline", lambda x: app.screen_capture("profile")]]
+            MDBoxLayout:
+                orientation: "horizontal"
+                size_hint_y: None
+                height: dp(56)  # Height of the search bar
+                padding:sp(10)
+
+                # Round Text Field for searching
+                MDTextField:
+                    id: search_field
+                    hint_text: "Search Contacts"
+                    size_hint_x: 0.85  # Adjust size for the text field
+                    size_hint_y: 1.1  # Adjust size for the text field
+                    mode: "round"  # Rounded design
+                    pos_hint: {"center_y": 0.5}
+                    background_color: [1, 1, 1, 1]  # White background
+                    line_color: [0, 0, 0, 0]  # Hide the underline
+                    hint_text_color_normal: [0.7, 0.7, 0.7, 1]  # Light grey hint text
+                    hint_text_color_focus: [0.4, 0.4, 0.4, 1]  # Darker grey when focused
+                    text_color: [0, 0, 0, 1]  # Black text color
+                    padding: sp(10), sp(5)
+                    on_text: app.search_contacts(self.text)  # Call search function on text change
+
+                # Search Icon Button
+                MDIconButton:
+                    icon: "magnify"# Magnifying glass icon
+                    pos_hint: {"center_y": 0.5}
+                    on_release:
+                        print(app.user_data)
+#                        app.search_contacts(search_field.text)  # Call search function on button click
+
             RecycleView:
-                id:contact
+                id: contact
                 key_viewclass: 'viewclass'
                 key_size: 'height'
                 RecycleBoxLayout:
-                    id:wali
-                    spacing:dp(10)
+                    id: wali
+                    spacing: dp(10)
                     padding: dp(10)
                     default_size: None, dp(70)
                     default_size_hint: 1, None
                     size_hint_y: None
                     height: self.minimum_height
-                    orientation:"vertical"
+                    orientation: "vertical"
+    MDScreen:
+        name: "edit_link"
+        MDBoxLayout:
+            orientation: "vertical"
+            MDTopAppBar:
+                title:"Edit phone"
+                elevation: .5
+                md_bg_color: "#eaf4f4"
+                specific_text_color: "black"
+            MDFloatLayout:
+                orientation: "vertical"
+                md_bg_color: "#eaf4f4"
+                spacing: dp(20)
+                # Text Field for entering the link
+                MDCard:
+                    id: preview_card
+                    orientation: "vertical"
+                    size_hint: 0.9, None
+                    height: self.minimum_height
+                    pos_hint: {"center_x": 0.5, "center_y":.75}
+                    padding: dp(10)
+                    radius: [15, 15, 15, 15]
+                    elevation: 3
+                    md_bg_color: "#ffffff"
+
+                    # WhatsApp image at the top
+                    FitImage:
+                        source: app.link_image  # Use the dynamic image source from the link preview
+                        size_hint_y: None
+                        height: dp(80)
+                        pos_hint: {"center_x": 0.5}
+                        radius: [15, 15, 0, 0]
+
+                    # Title and description in a vertical box
+                    MDBoxLayout:
+                        orientation: "vertical"
+                        padding: dp(10)
+                        spacing: dp(5)
+                        size_hint_y: None
+                        height: self.minimum_height  # This will allow the layout to grow as text is added.
+                        pos_hint:{"center_x":.5, "center_y":.7}
+                        radius:5
+
+                        MDLabel:
+                            text: app.link_title
+                            font_style: "Subtitle2"
+                            theme_text_color: "Primary"
+                            halign: "left"
+                            size_hint_y: None
+                            height: self.texture_size[1]
+
+                        # Description of the link preview
+                        MDLabel:
+                            text: app.link_description
+                            font_style: "Body2"
+                            theme_text_color: "Secondary"
+                            halign: "left"
+                            size_hint_y: None
+                            height: self.texture_size[1]
+
+                    # Footer containing the domain and URL at the bottom of the card
+                    MDBoxLayout:
+                        orientation: "horizontal"
+                        size_hint_y: None
+                        height: dp(30)
+                        padding: [dp(10), 0, dp(10), 0]
+
+                        # Domain or site name
+                        MDLabel:
+                            text: app.link_domain
+                            font_style: "Caption"
+                            theme_text_color: "Hint"
+                            halign: "left"
+                            size_hint_x: 0.7
+
+                        # The URL link itself
+                        MDLabel:
+                            text: app.link_url
+                            font_style: "Caption"
+                            theme_text_color: "Hint"
+                            halign: "right"
+                MDTextField:
+                    id: link_field
+                    hint_text:app.edit_hint
+                    size_hint_x:.8
+                    pos_hint:{"center_x":.5, "center_y":.45}
+                    font_size: dp(18)
+                    foreground_color: 53 / 225, 59 / 225, 60 / 225, 1
+                    line_color_focus: 53 / 225, 59 / 225, 60 / 225, 1
+                    fill_color_focus: 53 / 225, 59 / 225, 60 / 225, 1
+                    hint_text_color_focus: 53 / 225, 59 / 225, 60 / 225, 1
+                    text_color_focus: 53 / 225, 59 / 225, 60 / 225, 1
+                    halign: 'left'
+                    on_text:
+                        app.opt_preview()  # Fetch preview on Enter key
+                        app.account_link = link_field.text
+
+                # Save Button
+                MDRaisedButton:
+                    text:"Save"
+                    md_bg_color:  "black"
+                    text_color: "#FFFFFF"
+                    size_hint:.5,.08
+                    pos_hint:{"center_x":.5, "center_y":.3}
+                    on_release:
+                        app.account_link = link_field.text
+                        app.add_save_account()
 
     MDScreen:
-        name:"profile"
+        name:"edit_phone"
         MDBoxLayout:
-            orientation:"vertical"
-            spacing:dp("10")
+            orientation: "vertical"
+            spacing: dp("10")
             MDTopAppBar:
-	            title: "Contacts"
-	            elevation: 0
-	            md_bg_color: "#eaf4f4"
-	            specific_text_color: "black"
-			MDFloatLayout:
+                title:"Edit phone"
+                elevation: .5
+                md_bg_color: "#eaf4f4"
+                specific_text_color: "black"
+            MDFloatLayout:
+                md_bg_color:"#eaf4f4"
+                MDBoxLayout:
+                    size_hint_y: None
+                    height: 50  # This will allow the layout to grow as text is added.
+                    md_bg_color:"white"
+                    width:app.size_x/1.2
+                    size_hint_x:None
+                    pos_hint:{"center_x":.5, "center_y":.9}
+                    radius:5
+                    MDLabel:
+                        id: story_label
+                        text: app.account_link  # Your story text goes here
+                        theme_text_color: "Custom"
+                        text_color: "black"
+                        font_style: "Body1"
+                        halign: "center"
+                        size_hint_y: None
+                        height: self.texture_size[1]
+                        pos_hint: {"center_x": .5, "center_y": .5}
+                MDTextField:
+                    id:sms_edit
+                    mode: "round"
+                    hint_text:app.edit_hint
+                    size_hint_x:.8
+                    pos_hint:{"center_x":.5, "center_y":.78}
+                    font_size: dp(18)
+                    foreground_color: 53 / 225, 59 / 225, 60 / 225, 1
+                    line_color_focus: 53 / 225, 59 / 225, 60 / 225, 1
+                    fill_color_focus: 53 / 225, 59 / 225, 60 / 225, 1
+                    hint_text_color_focus: 53 / 225, 59 / 225, 60 / 225, 1
+                    text_color_focus: 53 / 225, 59 / 225, 60 / 225, 1
+                    halign: 'left'
+                    on_text:
+                        app.account_link = sms_edit.text
+
+                MDRaisedButton:
+                    text:"Save"
+                    md_bg_color:  "black"
+                    text_color: "#FFFFFF"
+                    size_hint:.5,.08
+                    pos_hint:{"center_x":.5, "center_y":.64}
+                    on_release:
+                        app.add_save_account()
+
+    MDScreen:
+        name: "profile"
+        md_bg_color: "#eaf4f4"
+
+        MDBoxLayout:
+            orientation: "vertical"
+            spacing: dp("10")
+
+            # Profile Card
+            MDFloatLayout:
+                MDCard:
+#                    md_bg_color: "#eaf4f4"
+                    orientation: "vertical"
+                    size_hint: 0.9, None
+                    height: "300dp"
+                    pos_hint: {"center_x": 0.5, "center_y": 0.75}
+                    padding: "20dp"
+                    radius: [15, 15, 15, 15]
+                    elevation: 0
+
+                    # User's profile picture
+                    FitImage:
+                        source: app.user_pic
+                        size_hint: None, None
+                        size: "100dp", "100dp"
+                        pos_hint: {"center_x": 0.5}
+                        radius: [50, 50, 50, 50]
+
+                    # User's name
+                    MDLabel:
+                        text: app.user_name
+                        halign: "center"
+                        font_style: "H6"
+                        theme_text_color: "Primary"
+                        pos_hint: {"center_x": 0.5}
+
+                    # User's email
+                    MDLabel:
+                        text: app.user_email
+                        halign: "center"
+                        font_style: "Subtitle2"
+                        theme_text_color: "Secondary"
+                        pos_hint: {"center_x": 0.5}
+                        padding_y: 10
+
+                    # User's email verification status
+                    MDLabel:
+                        text: "Email Verified: Yes"
+                        halign: "center"
+                        font_style: "Caption"
+                        theme_text_color: "Hint"
+                        pos_hint: {"center_x": 0.5}
+
+                # Social Accounts Card
+                MDCard:
+                    md_bg_color: "#ffffff"
+                    orientation: "horizontal"
+                    size_hint: 0.95, None
+                    height: "100dp"
+                    pos_hint: {"center_x": 0.5, "center_y": 0.4}
+                    padding: "20dp"
+                    radius: [15, 15, 15, 15]
+                    elevation: 1
+                    spacing: "5dp"
+
+                    # Phone Icon
+                    MDIconButton:
+                        icon: "phone"
+                        user_font_size: "24sp"
+                        on_release:
+                            app.view_account_details('phone')
+
+                    # Instagram Icon
+                    MDIconButton:
+                        icon: "instagram"
+                        user_font_size: "24sp"
+                        on_release:
+                            app.view_account_details(self.icon)
+
+                    # WhatsApp Icon
+                    MDIconButton:
+                        icon: "whatsapp"
+                        user_font_size: "24sp"
+                        on_release:
+                            app.view_account_details('whatsapp')
+
+                    # Facebook Icon
+                    MDIconButton:
+                        icon: "github"
+                        user_font_size: "24sp"
+                        on_release:
+                            app.view_account_details(self.icon)
+
+                    # LinkedIn Icon
+                    MDIconButton:
+                        icon: "linkedin"
+                        user_font_size: "24sp"
+                        on_release:
+                            app.view_account_details(self.icon)
+
+                    # YouTube Icon
+                    MDIconButton:
+                        icon: "twitter"
+                        user_font_size: "24sp"
+                        on_release:
+                            app.view_account_details(self.icon)
+
+                    MDIconButton:
+                        icon: "web"
+                        user_font_size: "24sp"
+                        on_release:
+                            app.view_account_details(self.icon)
+
+
+
 
 <Contacts>:
 	text: root.name
 	ImageLeftWidget:
 	    source:root.image
+
+<Pic@MDCard>:
+    md_bg_color:"#eaf4f4"
+    orientation: "vertical"
+    size_hint: None, None  # Allow the card to adapt to content size
+    adaptive_height: True  # Card will adjust its height based on content
+    adaptive_width: True   # Card will adjust its width based on content
+    pos_hint: {"center_x": 0.5, "center_y": 0.5}
+    padding: "20dp"
+    radius: [50, 50, 50, 50]
+    elevation: 0
+
+    # User's profile picture
+    FitImage:
+        source: 'https://lh3.googleusercontent.com/a/ACg8ocIT_d6PJsuw4KxtCBnprPf-jLSjDva0vCP6UJMSmzvE3qnwaEvY=s96-c'
+        size_hint: None, None
+        size: "50dp", "50dp"  # Size matches the picture's resolution (96x96)
+        pos_hint: {"center_x": 0.5}
+        radius: [48, 48, 48, 48]  # Make the image circular
+
+<Spin>:
+    adaptive_height: True
+    spacing: dp(5)
+    MDSpinner:
+        size_hint: None, None
+        size: dp(25), dp(25)
+        pos_hint: {'center_x': .5, 'center_y': 1}
+        active: True
+        color: 78 / 255, 82 / 255, 84 / 255, 1
+    MDLabel:
+        text:'Loading...'
+        bold:True
+#        font_name:'components/fonts/Gill Sans.otf'
+        theme_text_color: "Custom"
+        text_color:78/255, 82/255, 84/255, 1
+        pos_hint: {'center_x': .5, 'center_y': 1}
+
+<View_account_details>
+    orientation: "vertical"
+    padding: "10dp"
+    spacing: "30dp"
+    adaptive_height: True
+    # Horizontal Box for Edit Button
+    # Account Name Label
+    MDLabel:
+        text: app.account_name # Example name, this should be dynamic
+        font_style: "H6"
+        theme_text_color: "Primary"
+        halign: "left"
+
+    # Account Link Label
+    MDLabel:
+        text: app.account_link
+        font_style: "Subtitle2"
+        theme_text_color: "Secondary"
+        halign: "left"
+

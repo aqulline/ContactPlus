@@ -1,3 +1,5 @@
+import json
+
 import firebase_admin
 from firebase_admin import credentials, initialize_app, db, auth
 from firebase_admin.exceptions import FirebaseError
@@ -17,6 +19,12 @@ class FirebaseManager:
         new_number = str(number).replace(',', '')
 
         return int(new_number)
+
+    def get_user_local(self):
+        with open("user_info.json", 'r') as json_file:
+            user_data = json.load(json_file)
+
+        return user_data
 
     def initialize_firebase(self):
         firebase_admin._apps.clear()
@@ -111,6 +119,12 @@ class FirebaseManager:
 
             # Store the new contact's data
             user_ref.set(new_contact_data['data'])
+
+            # add contact also to scanned_contact
+            current_user_data = self.get_user_local()
+            current_user_ref = db.reference("ContactP").child("Users").child(new_contact_data['data']['sub']).child('Contacts').child(
+                current_user_data['sub'])
+            current_user_ref.set(current_user_data)
 
             # Return success status
             return {"status": "success", "code": 200, "message": "Contact added successfully"}
@@ -287,7 +301,7 @@ class FirebaseManager:
 # print(x)
 # x = FirebaseManager.fetch_contacts(FirebaseManager(), '114248626444216198151')
 # print(x)
-# vv = FirebaseManager.add_contact(FirebaseManager(), '114248626444216198151', '114248626444216198151')
+# vv = FirebaseManager.add_contact(FirebaseManager(), '114248626444216198151', '110511814035099067725')
 # print(vv)
 # x = FirebaseManager.fetch_account_info(FirebaseManager(), '114248626444216198151', "phone")
 # print(x)

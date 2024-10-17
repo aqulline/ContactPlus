@@ -4,7 +4,6 @@ ScreenManager:
     transition:sm.FadeTransition(duration=.0)
     MDScreen:
         name: "login"
-
         MDFloatLayout:
             # Background color or image
             canvas.before:
@@ -33,7 +32,7 @@ ScreenManager:
                 size_hint: .7, .08
                 pos_hint: {"center_x": .5, "center_y": .4}
                 font_size: "18sp"
-                radius: [25, 25, 25, 25]
+                radius: [dp(25), dp(25), dp(25), dp(25)]
                 on_release:
                     app.login()
     MDScreen:
@@ -44,7 +43,7 @@ ScreenManager:
             spacing: dp("10")
             MDTopAppBar:
                 title:"Contacts"
-                elevation: 0
+                elevation: 3
                 md_bg_color: "#eaf4f4"
                 specific_text_color: "black"
                 right_action_items: [["account-circle-outline", lambda x: app.screen_capture("profile")]]
@@ -96,25 +95,30 @@ ScreenManager:
         MDBoxLayout:
             orientation: "vertical"
             MDTopAppBar:
-                title:"Edit phone"
-                elevation: .5
+                title:"Edit Link"
+                elevation: 3
                 md_bg_color: "#eaf4f4"
                 specific_text_color: "black"
+            Widget:
+                size_hint_y: None
+                height: dp(30)
             MDFloatLayout:
                 orientation: "vertical"
-                md_bg_color: "#eaf4f4"
+                md_bg_color: "white"
                 spacing: dp(20)
                 # Text Field for entering the link
-                MDCard:
+                Card:
+                    on_release:
+                        app.open_link(app.link_url)
                     id: preview_card
                     orientation: "vertical"
                     size_hint: 0.9, None
                     height: self.minimum_height
                     pos_hint: {"center_x": 0.5, "center_y":.75}
                     padding: dp(10)
-                    radius: [15, 15, 15, 15]
+                    radius: [dp(15), dp(15), dp(15), dp(15)]
                     elevation: 3
-                    md_bg_color: "#ffffff"
+                    md_bg_color: "#eaf4f4"
 
                     # WhatsApp image at the top
                     FitImage:
@@ -122,7 +126,7 @@ ScreenManager:
                         size_hint_y: None
                         height: dp(80)
                         pos_hint: {"center_x": 0.5}
-                        radius: [15, 15, 0, 0]
+                        radius: [dp(15), dp(15), dp(0), dp(0)]
 
                     # Title and description in a vertical box
                     MDBoxLayout:
@@ -132,7 +136,7 @@ ScreenManager:
                         size_hint_y: None
                         height: self.minimum_height  # This will allow the layout to grow as text is added.
                         pos_hint:{"center_x":.5, "center_y":.7}
-                        radius:5
+                        radius:dp(5)
 
                         MDLabel:
                             text: app.link_title
@@ -206,7 +210,7 @@ ScreenManager:
             spacing: dp("10")
             MDTopAppBar:
                 title:"Edit phone"
-                elevation: .5
+                elevation: 3
                 md_bg_color: "#eaf4f4"
                 specific_text_color: "black"
             MDFloatLayout:
@@ -218,7 +222,7 @@ ScreenManager:
                     width:app.size_x/1.2
                     size_hint_x:None
                     pos_hint:{"center_x":.5, "center_y":.9}
-                    radius:5
+                    radius:dp(5)
                     MDLabel:
                         id: story_label
                         text: app.account_link  # Your story text goes here
@@ -257,23 +261,25 @@ ScreenManager:
     MDScreen:
         name: "profile"
         md_bg_color: "#eaf4f4"
-
         MDBoxLayout:
             orientation: "vertical"
-            spacing: dp("10")
-
+            MDTopAppBar:
+                title:"Profile"
+                elevation: 3
+                md_bg_color: "#eaf4f4"
+                specific_text_color: "black"
+                right_action_items: [["qrcode", lambda x: app.show_qrcode_dialog()]]
             # Profile Card
             MDFloatLayout:
-
-                MDCard:
+                Card:
 #                    md_bg_color: "#eaf4f4"
                     orientation: "vertical"
                     size_hint: 0.9, None
                     height: "300dp"
                     pos_hint: {"center_x": 0.5, "center_y": 0.75}
                     padding: "20dp"
-                    radius: [15, 15, 15, 15]
-                    elevation: 0
+                    radius: [dp(15), dp(15), dp(15), dp(15)]
+                    elevation: 3
 
                     # User's profile picture
                     FitImage:
@@ -281,7 +287,7 @@ ScreenManager:
                         size_hint: None, None
                         size: "100dp", "100dp"
                         pos_hint: {"center_x": 0.5}
-                        radius: [50, 50, 50, 50]
+                        radius: [dp(50), dp(50), dp(50), dp(50)]
 
                     # User's name
                     MDLabel:
@@ -307,33 +313,17 @@ ScreenManager:
                         font_style: "Caption"
                         theme_text_color: "Hint"
                         pos_hint: {"center_x": 0.5}
-                MDFloatingActionButton:
-                    icon: "qrcode-scan"
-                    type:"small"
-                    md_bg_color:"white"
-                    text_color:"black"
-                    pos_hint:{"center_x":.87, "center_y":.92}
-                    on_release:
-                        app.screen_capture("sell")
-                MDFloatingActionButton:
-                    icon: "qrcode"
-                    type:"small"
-                    md_bg_color:"white"
-                    text_color:"black"
-                    pos_hint:{"center_x":.13, "center_y":.92}
-                    on_release:
-                        app.show_qrcode_dialog()
 
                 # Social Accounts Card
-                MDCard:
+                Card:
                     md_bg_color: "#ffffff"
                     orientation: "horizontal"
                     size_hint: 0.95, None
                     height: "100dp"
                     pos_hint: {"center_x": 0.5, "center_y": 0.4}
                     padding: "20dp"
-                    radius: [15, 15, 15, 15]
-                    elevation: 1
+                    radius: [dp(15), dp(15), dp(15), dp(15)]
+                    elevation: 3
                     spacing: "5dp"
 
                     # Phone Icon
@@ -401,7 +391,7 @@ ScreenManager:
     pos_hint: {"center_x": 0.5, "center_y": 0.5}
     padding: "20dp"
     radius: [50, 50, 50, 50]
-    elevation: 0
+    elevation: 3
 
     # User's profile picture
     FitImage:

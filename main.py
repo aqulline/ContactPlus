@@ -6,18 +6,22 @@ from time import sleep
 
 import qrcode
 from kivy.base import EventLoop
-from kivy.properties import NumericProperty, StringProperty, DictProperty, ListProperty, BooleanProperty
+from kivy.metrics import dp
+from kivy.properties import NumericProperty, StringProperty, DictProperty, ListProperty, BooleanProperty, Logger
 from kivymd.app import MDApp
 from kivy.core.window import Window
-from kivy.clock import Clock
+from kivy.clock import Clock, mainthread
 from kivy import utils
 from kivymd.toast import toast
 from kivyauth.google_auth import initialize_google, login_google, logout_google
+from kivymd.uix.behaviors import RectangularElevationBehavior
 from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.button import MDFlatButton
+from kivymd.uix.card import MDCard
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.list import OneLineAvatarIconListItem
 import hyperlink_preview as HLP
+import webbrowser
 
 import GoogleKeys
 from database import FirebaseManager as FM
@@ -39,6 +43,8 @@ class Contacts(OneLineAvatarIconListItem):
 class Spin(MDBoxLayout):
     pass
 
+class Card(MDCard, RectangularElevationBehavior):
+    pass
 
 class View_account_details(MDBoxLayout):
     pass
@@ -76,6 +82,7 @@ class MainApp(MDApp):
 
 
     def on_start(self):
+        print(self.size_x, self.size_y)
         self.keyboard_hooker()
         if utils.platform == 'android':
             self.request_android_permissions()
@@ -125,13 +132,15 @@ class MainApp(MDApp):
         USER FUNCTIONS (CONTACTS)
     
     """
-
+    @mainthread
     def login_optimization(self):
         self.spin_dialog()
         thr = threading.Thread(target=self.login_start)
         thr.start()
 
     def login_start(self):
+        print(self.user_data)
+        self.user_data_getter()
         Clock.schedule_once(lambda dt: self.add_contacts(), .1)
         Clock.schedule_once(lambda dt: self.dialog_spin.dismiss(), .1)
         Clock.schedule_once(lambda dt: self.screen_capture('home'), .1)
@@ -145,6 +154,8 @@ class MainApp(MDApp):
         print(data)
         if data['code'] == 200:
             for x, y in data['data'].items():
+                if y['picture'] == '':
+                    y['picture'] = f"https://storage.googleapis.com/farmzon-abdcb.appspot.com/Letters/{y['family_name'][0]}"
                 self.root.ids.contact.data.append(
                     {
                         "viewclass": "Contacts",
@@ -220,16 +231,22 @@ class MainApp(MDApp):
                 self.edit_hint = "Enter phone"
                 self.edit_screen = "edit_phone"
             if account_name == 'whatsapp':
+                self.edit_screen = "edit_link"
                 self.root.ids.link_field.text = "https://wa.me/255replacethiswithphone"
             if account_name == 'instagram':
-                self.root.ids.link_field.text = "https://www.instagram.com/beast9060.aq"
+                self.edit_screen = "edit_link"
+                self.root.ids.link_field.text = "https://www.instagram.com/enter_username_here"
             if account_name == 'linkedin':
+                self.edit_screen = "edit_link"
                 self.root.ids.link_field.text = "https://www.linkedin.com/in/enter_user_name_here_or_paste_link"
             if account_name == 'twitter':
+                self.edit_screen = "edit_link"
                 self.root.ids.link_field.text = "https://x.com/enter_user_name_here_or_paste_link"
             if account_name == 'github':
+                self.edit_screen = "edit_link"
                 self.root.ids.link_field.text = "https://github.com/enter_user_name_here_or_paste_link"
             if account_name == 'web':
+                self.edit_screen = "edit_link"
                 self.root.ids.link_field.text = "paste_your_web_link_here"
             self.action_name = "#Empty"
             self.account_link = "#Empty"
@@ -262,6 +279,8 @@ class MainApp(MDApp):
     def edit_link_callback(self):
         self.screen_capture(self.edit_screen)
         self.root.ids.sms_edit.text = self.account_link
+        self.root.ids.link_field.text = self.account_link
+        print(self.account_link)
         self.account_dialog.dismiss()
 
     def preview_link(self):
@@ -270,9 +289,9 @@ class MainApp(MDApp):
             hlp = HLP.HyperLinkPreview(url=str(link))
             print(link)
             if hlp.is_valid:
+                sleep(.3)
                 preview_data = hlp.get_data()
                 Clock.schedule_once(lambda dt: self.update_preview(preview_data), .1)
-
         except Exception as e:
             # Catch any errors that occur, such as network errors, invalid URLs, etc.
             # Optionally, you can set default or error values for these fields if the link preview fails.
@@ -284,14 +303,28 @@ class MainApp(MDApp):
             self.link_domain = "Unknown"
 
     def update_preview(self, link_data):
-        print(link_data)
-        # Make sure that each expected key exists in the link_data and handle any missing values
-        self.link_title = str(link_data.get('title', 'No Title'))
-        self.link_image = str(link_data.get('image', 'https://lh5.googleusercontent.com/proxy/8b31I_Jtp3hRBSUVSubNHO_6KFNvldAStfeqKwAFUf22WOuDDBUlI1t26OW0ZadJr7LAXt0rbBoray3mARaiIM4-7Z-kUPpx'))
-        self.link_url = str(link_data.get('url', 'No URL'))
-        self.link_description = str(link_data.get('description', 'No Description'))
-        self.link_site_name = str(link_data.get('site_name', 'No Site Name'))
-        self.link_domain = str(link_data.get('domain', 'No Domain'))
+        try:
+            print(link_data)
+            # Make sure that each expected key exists in the link_data and handle any missing values
+            if link_data:
+                self.link_title = str(link_data.get('title', 'No Title'))
+                self.link_image = str(link_data.get('image', 'https://lh5.googleusercontent.com/proxy/8b31I_Jtp3hRBSUVSubNHO_6KFNvldAStfeqKwAFUf22WOuDDBUlI1t26OW0ZadJr7LAXt0rbBoray3mARaiIM4-7Z-kUPpx'))
+                self.link_url = str(link_data.get('url', 'No URL'))
+                self.link_description = str(link_data.get('description', 'No Description'))
+                self.link_site_name = str(link_data.get('site_name', 'No Site Name'))
+                self.link_domain = str(link_data.get('domain', 'No Domain'))
+        except Exception as e:
+            self.link_title = "Error"
+            self.link_image = str(
+                "https://lh5.googleusercontent.com/proxy/8b31I_Jtp3hRBSUVSubNHO_6KFNvldAStfeqKwAFUf22WOuDDBUlI1t26OW0ZadJr7LAXt0rbBoray3mARaiIM4-7Z-kUPpx")
+            self.link_url = str(None)
+            self.link_description = "None"
+            self.link_site_name = "Unknown"
+            self.link_domain = "Unknown"
+
+    def open_link(self, url):
+        webbrowser.open(url)
+
     """
         END OF SCREEN FUNCTIONS
     """
@@ -318,7 +351,7 @@ class MainApp(MDApp):
 
         qr.add_data(id_gen)
         qr.make(fit=True)
-        img = qr.make_image(fill_color="#eaf4f4", back_color="white")
+        img = qr.make_image(fill_color="black", back_color="#eaf4f4")
         img.save(f"Qrcodes/{id_gen}.png")
 
     def show_qrcode_dialog(self):
@@ -335,12 +368,12 @@ class MainApp(MDApp):
     
     """
     def after_login(self, *args):
-        Clock.schedule_once(lambda dt: self.screen_capture("home"), 0)
         print(args)
         if utils.platform == 'android':
             keys = ['sub', 'name', 'email', 'family_name', 'given_name',  'picture']
             user_dict = dict(zip(keys, args))
             self.user_data = user_dict
+            print(f"Login: user data {self.user_data}")
         else:
             self.user_data = args[0]
             print(self.user_data)
@@ -356,6 +389,7 @@ class MainApp(MDApp):
 
         self.qr_code(self.user_data['sub'])
         self.login_optimization()
+        FM.register_user(FM(), self.user_data)
         print(f"User information has been written to {filename}.")
 
     def erro_login(self, *args):
@@ -375,12 +409,6 @@ class MainApp(MDApp):
                 if user_email:
                     print(f"User found: {user_email}")
                     self.user_data = user_data
-                    print(self.user_data)
-                    self.user_id = self.user_data['sub']
-                    self.user_name = self.user_data['name']
-                    self.user_email = self.user_data['email']
-                    self.user_pic = self.user_data['picture']
-                    self.user_qrcode = f"Qrcodes/{self.user_id}.png"
                     # Optionally, you can call a function to proceed to the home screen
 
                     self.login_optimization()
@@ -388,6 +416,14 @@ class MainApp(MDApp):
 
         # If the user is not in the file, proceed with Google login
         login_google()
+
+    @mainthread
+    def user_data_getter(self):
+        self.user_id = self.user_data['sub']
+        self.user_name = self.user_data['name']
+        self.user_email = self.user_data['email']
+        self.user_pic = self.user_data['picture']
+        self.user_qrcode = f"Qrcodes/{self.user_id}.png"
 
     def logout(self):
         logout_google(self.erro_login)

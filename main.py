@@ -139,40 +139,83 @@ class MainApp(MDApp):
         thr.start()
 
     def login_start(self):
-        print(self.user_data)
         self.user_data_getter()
         Clock.schedule_once(lambda dt: self.add_contacts(), .1)
         Clock.schedule_once(lambda dt: self.dialog_spin.dismiss(), .1)
         Clock.schedule_once(lambda dt: self.screen_capture('home'), .1)
 
+    def opt_sync_contact(self):
+        self.spin_dialog()
+        thr = threading.Thread(target=self.sync_contact)
+        thr.start()
 
-    def add_contacts(self):
-        # self.screen_capture("contacts")
+    def sync_contact(self):
+        contacts_file = 'contacts.json'
+        data = FM.fetch_contacts(FM(), self.user_data['sub'])
+        if data['code'] == 200:
+            try:
+                with open(contacts_file, 'w') as file:
+                    json.dump(data['data'], file)
+
+                Clock.schedule_once(lambda dt: self.load_contacts_to_ui(data['data']), .1)
+            except Exception as e:
+                print(f"Error code 243")
+
+    def load_contacts_to_ui(self, contacts_data):
+        """Helper function to load contacts into the UI."""
         self.root.ids.contact.data = {}
         index = 0
+        for x, y in contacts_data.items():
+            if y['picture'] == '':
+                y['picture'] = f"https://storage.googleapis.com/farmzon-abdcb.appspot.com/Letters/{y['family_name'][0]}"
+            self.root.ids.contact.data.append(
+                {
+                    "viewclass": "Contacts",
+                    "name": y['name'],
+                    "contact_id": y['sub'],
+                    "image": y['picture'],
+                    "id": y['sub'],
+                    "selected": False,
+                    "data_index": index
+                }
+            )
+            index += 1
+
+    def add_contacts(self):
+        # Path to local JSON file to store contacts
+        contacts_file = 'contacts.json'
+        self.opt_sync_contact()
+        # Check if contacts are already saved in the local JSON file
+        if os.path.exists(contacts_file):
+            try:
+                with open(contacts_file, 'r') as file:
+                    saved_data = json.load(file)
+                    self.load_contacts_to_ui(saved_data)  # Load contacts into UI from the local file
+                    return
+            except Exception as e:
+                toast("Fail to load contacts!")
+
+        # If no local data, fetch contacts from server
         data = FM.fetch_contacts(FM(), self.user_data['sub'])
-        print(data)
+
+        # If the response is successful, save the contacts to local file and load into UI
         if data['code'] == 200:
-            for x, y in data['data'].items():
-                if y['picture'] == '':
-                    y['picture'] = f"https://storage.googleapis.com/farmzon-abdcb.appspot.com/Letters/{y['family_name'][0]}"
-                self.root.ids.contact.data.append(
-                    {
-                        "viewclass": "Contacts",
-                        "name": y['name'],
-                        "contact_id": y['sub'],
-                        "image": y['picture'],
-                        "id": y['sub'],
-                        "selected": False,
-                        "data_index": index
-                    }
-                )
-                index += 1
+            try:
+                # Save the fetched data to local JSON file
+                with open(contacts_file, 'w') as file:
+                    json.dump(data['data'], file)
+
+                # Load contacts into UI from fetched data
+                self.load_contacts_to_ui(data['data'])
+            except Exception as e:
+                toast(f"Error code 243")
 
 
-            """
-            SCREEN FUNCTIONS
-            """
+
+
+    """
+    SCREEN FUNCTIONS
+    """
 
     def screen_capture(self, screen):
         sm = self.root

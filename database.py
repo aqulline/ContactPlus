@@ -96,6 +96,48 @@ class FirebaseManager:
                 "message": f"An error occurred: {str(e)}"
             }
 
+    def fetch_user_profile(self, user_id):
+        # Initialize Firebase (ensure it is initialized)
+        self.initialize_firebase()
+
+        if not self.app_initialized:
+            # Return error if Firebase initialization fails
+            return {"status": "error", "code": 500, "message": "Firebase initialization failed"}
+
+        try:
+            # Reference to the user's data node in the database
+            user_ref = db.reference("ContactP").child("Users").child(user_id)
+
+            # Fetch user data
+            user_data = user_ref.get()
+
+            # Check if data is found
+            if not user_data:
+                return {"status": "error", "code": 404, "message": "User not found"}
+
+            # Fetch user's accounts if present
+            accounts_ref = user_ref.child('Accounts')
+            accounts_data = accounts_ref.get() or {}
+
+            # Fetch user's contacts if present
+            contacts_ref = user_ref.child('Contacts')
+            contacts_data = contacts_ref.get() or {}
+
+            # Construct the final user data object with additional information
+            full_user_data = {
+                "user_info": user_data.get('User_info', {}),
+                "accounts": accounts_data,
+                "contacts": contacts_data
+            }
+
+            # Return success with full user data
+            return {"status": "success", "code": 200, "message": "User account information fetched successfully",
+                    "data": full_user_data}
+
+        except Exception as e:
+            # Handle any exceptions that occur during the fetching process
+            return {"status": "error", "code": 500, "message": f"An error occurred: {str(e)}"}
+
     def add_contact(self, user_id, scanned_contact):
         # Fetch the new contact's information
         new_contact_data = self.fetch_user_info(scanned_contact)
@@ -301,10 +343,13 @@ class FirebaseManager:
 # print(x)
 # x = FirebaseManager.fetch_contacts(FirebaseManager(), '114248626444216198151')
 # print(x)
-# vv = FirebaseManager.add_contact(FirebaseManager(), '114248626444216198151', '110511814035099067725')
+# vv = FirebaseManager.add_contact(FirebaseManager(), '114248626444216198151', '114248626444216198151')
 # print(vv)
 # x = FirebaseManager.fetch_account_info(FirebaseManager(), '114248626444216198151', "phone")
 # print(x)
 # x = FirebaseManager.fetch_user_info(FirebaseManager(), '114248626444216198151')
+# print(x)
+
+# x = FirebaseManager.fetch_user_profile(FirebaseManager(), '114248626444216198151')
 # print(x)
 

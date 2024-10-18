@@ -374,11 +374,139 @@ ScreenManager:
                         on_release:
                             app.view_account_details(self.icon)
 
+    MDScreen:
+        name: "contact"
+        md_bg_color: "#eaf4f4"
+        MDBoxLayout:
+            orientation: "vertical"
+            MDTopAppBar:
+                title:app.contact_name
+                elevation: 3
+                md_bg_color: "#eaf4f4"
+                specific_text_color: "black"
+                anchor_title:"center"
+            # Profile Card
+            MDFloatLayout:
+                Card:
+#                    md_bg_color: "#eaf4f4"
+                    orientation: "vertical"
+                    size_hint: 0.9, None
+                    height: "300dp"
+                    pos_hint: {"center_x": 0.5, "center_y": 0.75}
+                    padding: "20dp"
+                    radius: [dp(15), dp(15), dp(15), dp(15)]
+                    elevation: 3
+
+                    # User's profile picture
+                    FitImage:
+                        source: app.contact_pic
+                        size_hint: None, None
+                        size: "100dp", "100dp"
+                        pos_hint: {"center_x": 0.5}
+                        radius: [dp(50), dp(50), dp(50), dp(50)]
+
+                    # User's name
+                    MDLabel:
+                        text: app.contact_name
+                        halign: "center"
+                        font_style: "H6"
+                        theme_text_color: "Primary"
+                        pos_hint: {"center_x": 0.5}
+
+                    # User's email
+                    MDLabel:
+                        text: app.contact_email
+                        halign: "center"
+                        font_style: "Subtitle2"
+                        theme_text_color: "Secondary"
+                        pos_hint: {"center_x": 0.5}
+                        padding_y: 10
+
+                    # User's email verification status
+                    MDLabel:
+                        text: "Email Verified: Yes"
+                        halign: "center"
+                        font_style: "Caption"
+                        theme_text_color: "Hint"
+                        pos_hint: {"center_x": 0.5}
+
+                # Social Accounts Card
+                Card:
+                    md_bg_color: "#ffffff"
+                    orientation: "horizontal"
+                    size_hint: 0.95, None
+                    height: "100dp"
+                    pos_hint: {"center_x": 0.5, "center_y": 0.4}
+                    padding: "20dp"
+                    radius: [dp(15), dp(15), dp(15), dp(15)]
+                    elevation: 3
+                    spacing: "5dp"
+                    outlined: "#f8f5f4"
+
+                    # Phone Icon
+                    MDIconButton:
+                        icon: "phone"
+                        disabled: app.social_account[self.icon]
+                        user_font_size: "24sp"
+                        on_release:
+                            app.view_account_details('phone')
+
+                    # Instagram Icon
+                    MDIconButton:
+                        icon: "instagram"
+                        disabled: app.social_account[self.icon]
+                        user_font_size: "24sp"
+                        on_release:
+                            app.view_account_details(self.icon)
+
+                    # WhatsApp Icon
+                    MDIconButton:
+                        icon: "whatsapp"
+                        disabled: app.social_account[self.icon]
+                        user_font_size: "24sp"
+                        on_release:
+                            app.view_account_details('whatsapp')
+
+                    # Facebook Icon
+                    MDIconButton:
+                        icon: "github"
+                        disabled: app.social_account[self.icon]
+                        user_font_size: "24sp"
+                        on_release:
+                            app.view_account_details(self.icon)
+
+                    # LinkedIn Icon
+                    MDIconButton:
+                        icon: "linkedin"
+                        disabled: app.social_account[self.icon]
+                        user_font_size: "24sp"
+                        on_release:
+                            app.view_account_details(self.icon)
+
+                    # YouTube Icon
+                    MDIconButton:
+                        icon: "twitter"
+                        disabled: app.social_account[self.icon]
+                        user_font_size: "24sp"
+                        on_release:
+                            app.view_account_details(self.icon)
+
+                    MDIconButton:
+                        icon: "web"
+                        disabled: app.social_account[self.icon]
+                        user_font_size: "24sp"
+                        on_release:
+                            app.view_account_details(self.icon)
 
 
 
 <Contacts>:
 	text: root.name
+	on_release:
+	    print(root.contact_id)
+	    app.selected_contact = root.contact_id
+	    app.screen_capture("contact")
+	    app.fetch_contact_opt()
 	ImageLeftWidget:
 	    source:root.image
 

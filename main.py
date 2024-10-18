@@ -210,35 +210,6 @@ class MainApp(MDApp):
             except Exception as e:
                 toast(f"Error code 243")
 
-
-
-
-    """
-    SCREEN FUNCTIONS
-    """
-
-    def screen_capture(self, screen):
-        sm = self.root
-        sm.current = screen
-        if screen in self.screens:
-            pass
-        else:
-            self.screens.append(screen)
-        print(self.screens)
-        self.screens_size = len(self.screens) - 1
-        self.current = self.screens[len(self.screens) - 1]
-        print(f'size {self.screens_size}')
-        print(f'current screen {screen}')
-
-    def screen_leave(self):
-        print(f"your were in {self.current}")
-        last_screens = self.current
-        self.screens.remove(last_screens)
-        print(self.screens)
-        self.screens_size = len(self.screens) - 1
-        self.current = self.screens[len(self.screens) - 1]
-        self.screen_capture(self.current)
-
     action_name = StringProperty("view")
     account_link = StringProperty("#Empty")
     account_name = StringProperty("")
@@ -339,7 +310,8 @@ class MainApp(MDApp):
             # Catch any errors that occur, such as network errors, invalid URLs, etc.
             # Optionally, you can set default or error values for these fields if the link preview fails.
             self.link_title = "Error"
-            self.link_image = str("https://lh5.googleusercontent.com/proxy/8b31I_Jtp3hRBSUVSubNHO_6KFNvldAStfeqKwAFUf22WOuDDBUlI1t26OW0ZadJr7LAXt0rbBoray3mARaiIM4-7Z-kUPpx")
+            self.link_image = str(
+                "https://lh5.googleusercontent.com/proxy/8b31I_Jtp3hRBSUVSubNHO_6KFNvldAStfeqKwAFUf22WOuDDBUlI1t26OW0ZadJr7LAXt0rbBoray3mARaiIM4-7Z-kUPpx")
             self.link_url = str(None)
             self.link_description = "None"
             self.link_site_name = "Unknown"
@@ -351,7 +323,8 @@ class MainApp(MDApp):
             # Make sure that each expected key exists in the link_data and handle any missing values
             if link_data:
                 self.link_title = str(link_data.get('title', 'No Title'))
-                self.link_image = str(link_data.get('image', 'https://lh5.googleusercontent.com/proxy/8b31I_Jtp3hRBSUVSubNHO_6KFNvldAStfeqKwAFUf22WOuDDBUlI1t26OW0ZadJr7LAXt0rbBoray3mARaiIM4-7Z-kUPpx'))
+                self.link_image = str(link_data.get('image',
+                                                    'https://lh5.googleusercontent.com/proxy/8b31I_Jtp3hRBSUVSubNHO_6KFNvldAStfeqKwAFUf22WOuDDBUlI1t26OW0ZadJr7LAXt0rbBoray3mARaiIM4-7Z-kUPpx'))
                 self.link_url = str(link_data.get('url', 'No URL'))
                 self.link_description = str(link_data.get('description', 'No Description'))
                 self.link_site_name = str(link_data.get('site_name', 'No Site Name'))
@@ -367,6 +340,89 @@ class MainApp(MDApp):
 
     def open_link(self, url):
         webbrowser.open(url)
+
+    """
+    
+    END USER FUNCTIONS
+    
+    """
+
+    """
+    CONTACT FUNCTIONS
+    """
+    selected_contact = StringProperty("")
+    contact_name = StringProperty("")
+    contact_email = StringProperty("")
+    contact_pic = StringProperty("")
+
+    contact_phone_status = BooleanProperty(True)
+    contact_instagram_status = BooleanProperty(True)
+    contact_whatsapp_status = BooleanProperty(True)
+    contact_github_status = BooleanProperty(True)
+    contact_linkedin_status = BooleanProperty(True)
+    contact_twitter_status = BooleanProperty(True)
+    contact_web_status = BooleanProperty(True)
+
+    social_account = DictProperty({"github": True, "whatsapp": True, "instagram": True, "web": True, "linkedin": True,
+                 "phone": True, "twitter": True})
+
+    def fetch_contact_opt(self):
+        self.spin_dialog()
+        thr = threading.Thread(target=self.fetch_contact)
+        thr.start()
+
+    def fetch_contact(self):
+        data = FM.fetch_user_profile(FM(), self.selected_contact)
+
+        if data['code']==200:
+            Clock.schedule_once(lambda dt: self.upddate_contact_info(data), 0)
+
+    def upddate_contact_info(self, data):
+        contact_info = data['data']['user_info']
+        self.contact_name = contact_info['name']
+        self.contact_email = contact_info['email']
+        self.contact_pic = contact_info['picture'] if contact_info[
+                                                          'picture'] != '' else f"https://storage.googleapis.com/farmzon-abdcb.appspot.com/Letters/{contact_info['name'][0]}"
+
+        contact_account = data['data']['accounts']
+        if contact_account:
+            for i, y in data['data']['accounts'].items():
+                self.social_account[y['account_name']] = False
+
+
+        Clock.schedule_once(lambda dt: self.dialog_spin.dismiss(), .1)
+
+
+    """
+    END OF CONTACT
+    """
+
+
+    """
+    SCREEN FUNCTIONS
+    """
+
+    def screen_capture(self, screen):
+        sm = self.root
+        sm.current = screen
+        if screen in self.screens:
+            pass
+        else:
+            self.screens.append(screen)
+        print(self.screens)
+        self.screens_size = len(self.screens) - 1
+        self.current = self.screens[len(self.screens) - 1]
+        print(f'size {self.screens_size}')
+        print(f'current screen {screen}')
+
+    def screen_leave(self):
+        print(f"your were in {self.current}")
+        last_screens = self.current
+        self.screens.remove(last_screens)
+        print(self.screens)
+        self.screens_size = len(self.screens) - 1
+        self.current = self.screens[len(self.screens) - 1]
+        self.screen_capture(self.current)
 
     """
         END OF SCREEN FUNCTIONS

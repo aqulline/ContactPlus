@@ -131,7 +131,7 @@ class MainApp(MDApp):
                 else:
                     print("callback. Some permissions refused.")
 
-            request_permissions([Permission.READ_CONTACTS, Permission.WRITE_CONTACTS, ], callback)
+            request_permissions([Permission.READ_CONTACTS, Permission.WRITE_CONTACTS, Permission.CAMERA], callback)
 
     def spin_dialog(self):
         if not self.dialog_spin:
@@ -148,6 +148,8 @@ class MainApp(MDApp):
         USER FUNCTIONS (CONTACTS)
     
     """
+    local_contacts = DictProperty({})
+
     @mainthread
     def login_optimization(self):
         self.spin_dialog()
@@ -206,6 +208,7 @@ class MainApp(MDApp):
             try:
                 with open(contacts_file, 'r') as file:
                     saved_data = json.load(file)
+                    self.local_contacts = saved_data
                     self.load_contacts_to_ui(saved_data)  # Load contacts into UI from the local file
                     return
             except Exception as e:
@@ -250,6 +253,8 @@ class MainApp(MDApp):
                 self.action_name = 'call'
                 self.edit_hint = "Enter phone"
                 self.edit_screen = "edit_phone"
+            else:
+                self.edit_screen = "edit_link"
             data = data['data']
             self.account_name = data['account_name']
             self.account_link = data['account_link']
@@ -408,6 +413,10 @@ class MainApp(MDApp):
 
         Clock.schedule_once(lambda dt: self.dialog_spin.dismiss(), .1)
 
+    def search_contact(self, text):
+        data = self.local_contacts
+
+        self.load_contacts_to_ui(data)
 
     """
     END OF CONTACT
@@ -577,7 +586,7 @@ class MainApp(MDApp):
         self.user_id = self.user_data['sub']
         self.user_name = self.user_data['name']
         self.user_email = self.user_data['email']
-        self.user_pic = self.user_data['picture']
+        self.user_pic = self.user_data['picture'] if self.user_data['picture'] != '' else f"https://storage.googleapis.com/farmzon-abdcb.appspot.com/Letters/{self.user_name['name'][0]}"
         self.user_qrcode = f"Qrcodes/{self.user_id}.png"
 
     def logout(self):

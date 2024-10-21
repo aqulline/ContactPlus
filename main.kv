@@ -373,6 +373,28 @@ ScreenManager:
                         user_font_size: "24sp"
                         on_release:
                             app.view_account_details(self.icon)
+    MDScreen:
+        name:"detail_scanner"
+        md_bg_color:"#C6C7C4"
+        on_enter:
+            app.get_details()
+        on_leave:
+            app.stop_camera_detail()
+        MDBoxLayout:
+            orientation: "vertical"
+            spacing: dp(10)
+            padding: dp(20)
+
+            MDTopAppBar:
+                title: "Add Contact"
+                elevation:2
+                md_bg_color: "white"
+                specific_text_color: "black"
+
+            Scan_Analyze:
+                extracted_data:app.get_QRcode
+                id:details_scan
+
 
     MDScreen:
         name: "contact"
@@ -572,7 +594,12 @@ ScreenManager:
     height: dp(400)  # Adjust height to accommodate profile picture
     padding: dp(20)
     spacing: dp(10)
-
+    MDIconButton:
+        icon:"qrcode-scan"
+        pos_hint:{"center_x":1}
+        on_release:
+            app.screen_capture("detail_scanner")
+            app.qr_dialog.dismiss()
     # User's Profile Picture at the top
     FitImage:
         source: app.user_pic  # Dynamic path to user's profile picture

@@ -1,13 +1,13 @@
 import json
 import os
 import threading
-from platform import platform
 from time import sleep
 
 import qrcode
+from PIL import Image
+from camera4kivy import Preview
 from kivy.base import EventLoop
-from kivy.metrics import dp
-from kivy.properties import NumericProperty, StringProperty, DictProperty, ListProperty, BooleanProperty, Logger
+from kivy.properties import NumericProperty, StringProperty, DictProperty, BooleanProperty, ObjectProperty
 from kivymd.app import MDApp
 from kivy.core.window import Window
 from kivy.clock import Clock, mainthread
@@ -22,6 +22,8 @@ from kivymd.uix.dialog import MDDialog
 from kivymd.uix.list import OneLineAvatarIconListItem
 import hyperlink_preview as HLP
 import webbrowser
+
+from pyzbar.pyzbar import decode
 
 import GoogleKeys
 from database import FirebaseManager as FM
@@ -51,6 +53,20 @@ class View_account_details(MDBoxLayout):
 
 class QRCodeDialog(MDBoxLayout):
     pass
+
+class Scan_Analyze(Preview):
+    extracted_data = ObjectProperty(None)
+
+    def analyze_pixels_callback(self, pixels, image_size, image_pos, scale, mirror):
+
+        pimage = Image.frombytes(mode='RGBA', size=image_size, data=pixels)
+        list_of_all_barcodes = decode(pimage)
+
+        if list_of_all_barcodes:
+            if self.extracted_data:
+                self.extracted_data(list_of_all_barcodes[0])
+            else:
+                print("NOt found")
 
 class MainApp(MDApp):
     # app
@@ -397,6 +413,44 @@ class MainApp(MDApp):
     END OF CONTACT
     """
 
+    """
+    SCAN QRCODE
+    """
+    barcode = StringProperty("")
+
+    def get_details(self):
+        self.root.ids.details_scan.connect_camera(enable_analyze_pixels=True, default_zoom=0.0)
+        print("connected")
+
+    def stop_camera_detail(self):
+        self.root.ids.details_scan.disconnect_camera()
+
+    @mainthread
+    def get_QRcode(self, result):
+        barcode = str(result.data)
+        code_type = str(result.type)
+        print(barcode)
+        if barcode:
+            if code_type == "QRCODE":
+                barcode = barcode.replace("b", "").replace("'", "")
+
+                self.barcode = barcode
+
+                self.spin_dialog()
+                # guest_data = FB.search_id(FB(), barcode)
+
+                thr = threading.Thread(target=self.get_data)
+                thr.start()
+
+    def get_data(self):
+        print(self.barcode)
+        FM.add_contact(FM(), self.user_id, self.barcode)
+        self.login_start()
+
+    """
+    END OF SCAN QRCODE
+    """
+
 
     """
     SCREEN FUNCTIONS
@@ -405,7 +459,9 @@ class MainApp(MDApp):
     def screen_capture(self, screen):
         sm = self.root
         sm.current = screen
-        if screen in self.screens:
+        if screen == 'detail_scanner':
+            return 0
+        elif screen in self.screens:
             pass
         else:
             self.screens.append(screen)

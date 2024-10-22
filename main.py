@@ -3,6 +3,7 @@ import os
 import threading
 from time import sleep
 
+import kivy
 import qrcode
 from PIL import Image
 from camera4kivy import Preview
@@ -19,7 +20,7 @@ from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.button import MDFlatButton
 from kivymd.uix.card import MDCard
 from kivymd.uix.dialog import MDDialog
-from kivymd.uix.list import OneLineAvatarIconListItem
+from kivymd.uix.list import OneLineAvatarIconListItem, IRightBodyTouch
 import hyperlink_preview as HLP
 import webbrowser
 
@@ -40,7 +41,10 @@ class Contacts(OneLineAvatarIconListItem):
     name = StringProperty("")
     image = StringProperty("")
     contact_id = StringProperty("")
+    phone = StringProperty("")
 
+class CallContainer(IRightBodyTouch, MDBoxLayout):
+    adaptive_width = True
 
 class Spin(MDBoxLayout):
     pass
@@ -96,10 +100,37 @@ class MainApp(MDApp):
     link_site_name = StringProperty("")
     link_domain = StringProperty("")
 
+    selected_contact = StringProperty("")
+    contact_name = StringProperty("")
+    contact_email = StringProperty("")
+    contact_pic = StringProperty("")
+
+    contact_phone_status = BooleanProperty(True)
+    contact_instagram_status = BooleanProperty(True)
+    contact_whatsapp_status = BooleanProperty(True)
+    contact_github_status = BooleanProperty(True)
+    contact_linkedin_status = BooleanProperty(True)
+    contact_twitter_status = BooleanProperty(True)
+    contact_web_status = BooleanProperty(True)
+
+    social_account = DictProperty({"github": True, "whatsapp": True, "instagram": True, "web": True, "linkedin": True,
+                                   "phone": True, "twitter": True})
+
+
+    action_name = StringProperty("view")
+    account_link = StringProperty("#Empty")
+    account_name = StringProperty("")
+    account_id = StringProperty("")
+    edit_hint = StringProperty("Edit link")
+    edit_screen = StringProperty("edit_link")
+
+    local_contacts = DictProperty({})
+
 
     def on_start(self):
         print(self.size_x, self.size_y)
         self.keyboard_hooker()
+        print()
         if utils.platform == 'android':
             self.request_android_permissions()
 
@@ -131,7 +162,7 @@ class MainApp(MDApp):
                 else:
                     print("callback. Some permissions refused.")
 
-            request_permissions([Permission.READ_CONTACTS, Permission.WRITE_CONTACTS, Permission.CAMERA], callback)
+            request_permissions([Permission.READ_CONTACTS, Permission.WRITE_CONTACTS, Permission.CAMERA, Permission.CALL_PHONE], callback)
 
     def spin_dialog(self):
         if not self.dialog_spin:
@@ -148,7 +179,6 @@ class MainApp(MDApp):
         USER FUNCTIONS (CONTACTS)
     
     """
-    local_contacts = DictProperty({})
 
     @mainthread
     def login_optimization(self):
@@ -194,10 +224,20 @@ class MainApp(MDApp):
                     "image": y['picture'],
                     "id": y['sub'],
                     "selected": False,
-                    "data_index": index
+                    "data_index": index,
+                    "phone": y['account_phone']
                 }
             )
             index += 1
+
+    def is_phone(self):
+        with open('user_info.json') as file:
+            data = json.load(file)
+
+        if 'account_phone' in data:
+            return True
+        else:
+            return False
 
     def add_contacts(self):
         # Path to local JSON file to store contacts
@@ -229,25 +269,34 @@ class MainApp(MDApp):
             except Exception as e:
                 toast(f"Error code 243")
 
-    action_name = StringProperty("view")
-    account_link = StringProperty("#Empty")
-    account_name = StringProperty("")
-    account_id = StringProperty("")
-    edit_hint = StringProperty("Edit link")
-    edit_screen = StringProperty("edit_link")
+    def add_save_account_opt(self):
+        self.spin_dialog()
+        thr = threading.Thread(target=self.add_save_account)
+        thr.start()
 
     def add_save_account(self):
         FM.add_account(FM(), self.user_id, self.account_name, self.account_link)
-        self.screen_capture("profile")
+        Clock.schedule_once(lambda dt: self.dialog_spin.dismiss(), .1)
+        Clock.schedule_once(lambda dt: self.screen_capture("profile"), .1)
 
     def opt_preview(self):
         thr = threading.Thread(target=self.preview_link)
         thr.start()
 
-    def view_account_details(self, account_name):
-        data = FM.fetch_account_info(FM(), self.user_id, account_name)
+    def view_account_details_opt(self):
+        self.spin_dialog()
+        thr = threading.Thread(target=self.view_account_details)
+        thr.start()
+
+    def view_account_details_contact_opt(self):
+        self.spin_dialog()
+        thr = threading.Thread(target=self.view_account_details_contact)
+        thr.start()
+
+    def view_account_details(self):
+        data = FM.fetch_account_info(FM(), self.user_id, self.account_name)
         print(data)
-        self.account_name = account_name
+        account_name = self.account_name
         if data['code'] == 200:
             if account_name == 'phone':
                 self.action_name = 'call'
@@ -255,39 +304,96 @@ class MainApp(MDApp):
                 self.edit_screen = "edit_phone"
             else:
                 self.edit_screen = "edit_link"
+                self.action_name = 'view'
             data = data['data']
             self.account_name = data['account_name']
             self.account_link = data['account_link']
             self.account_id = data['account_id']
-            self.show_account_dialog()
+            Clock.schedule_once(lambda dt: self.dialog_spin.dismiss(), .1)
+            Clock.schedule_once(lambda dt: self.show_account_dialog(), .1)
         elif data['code'] == 404:
             if account_name == 'phone':
                 self.action_name = 'call'
                 self.edit_hint = "Enter phone"
                 self.edit_screen = "edit_phone"
-            if account_name == 'whatsapp':
+            elif account_name == 'whatsapp':
                 self.edit_screen = "edit_link"
                 self.root.ids.link_field.text = "https://wa.me/255replacethiswithphone"
-            if account_name == 'instagram':
+            elif account_name == 'instagram':
                 self.edit_screen = "edit_link"
                 self.root.ids.link_field.text = "https://www.instagram.com/enter_username_here"
-            if account_name == 'linkedin':
+            elif account_name == 'linkedin':
                 self.edit_screen = "edit_link"
                 self.root.ids.link_field.text = "https://www.linkedin.com/in/enter_user_name_here_or_paste_link"
-            if account_name == 'twitter':
+            elif account_name == 'twitter':
                 self.edit_screen = "edit_link"
                 self.root.ids.link_field.text = "https://x.com/enter_user_name_here_or_paste_link"
-            if account_name == 'github':
+            elif account_name == 'github':
                 self.edit_screen = "edit_link"
                 self.root.ids.link_field.text = "https://github.com/enter_user_name_here_or_paste_link"
-            if account_name == 'web':
+            elif account_name == 'web':
                 self.edit_screen = "edit_link"
                 self.root.ids.link_field.text = "paste_your_web_link_here"
+            if account_name != 'phone':
+                self.action_name = 'view'
             self.action_name = "#Empty"
             self.account_link = "#Empty"
-            self.screen_capture(self.edit_screen)
+
+            Clock.schedule_once(lambda dt: self.dialog_spin.dismiss(), .1)
+            Clock.schedule_once(lambda dt: self.screen_capture(self.edit_screen), .1)
         else:
-            toast(data['message'])
+            Clock.schedule_once(lambda dt: toast(data['message']), .1)
+
+    def view_account_details_contact(self):
+        data = FM.fetch_account_info(FM(), self.selected_contact, self.account_name)
+        print(data)
+        account_name = self.account_name
+        if data['code'] == 200:
+            if account_name == 'phone':
+                self.action_name = 'call'
+                self.edit_hint = "Enter phone"
+                self.edit_screen = "edit_phone"
+            else:
+                self.edit_screen = "edit_link"
+                self.action_name = 'view'
+            data = data['data']
+            self.account_name = data['account_name']
+            self.account_link = data['account_link']
+            self.account_id = data['account_id']
+            Clock.schedule_once(lambda dt: self.dialog_spin.dismiss(), .1)
+            Clock.schedule_once(lambda dt: self.show_account_dialog(), .1)
+        elif data['code'] == 404:
+            if account_name == 'phone':
+                self.action_name = 'call'
+                self.edit_hint = "Enter phone"
+                self.edit_screen = "edit_phone"
+            elif account_name == 'whatsapp':
+                self.edit_screen = "edit_link"
+                self.root.ids.link_field.text = "https://wa.me/255replacethiswithphone"
+            elif account_name == 'instagram':
+                self.edit_screen = "edit_link"
+                self.root.ids.link_field.text = "https://www.instagram.com/enter_username_here"
+            elif account_name == 'linkedin':
+                self.edit_screen = "edit_link"
+                self.root.ids.link_field.text = "https://www.linkedin.com/in/enter_user_name_here_or_paste_link"
+            elif account_name == 'twitter':
+                self.edit_screen = "edit_link"
+                self.root.ids.link_field.text = "https://x.com/enter_user_name_here_or_paste_link"
+            elif account_name == 'github':
+                self.edit_screen = "edit_link"
+                self.root.ids.link_field.text = "https://github.com/enter_user_name_here_or_paste_link"
+            elif account_name == 'web':
+                self.edit_screen = "edit_link"
+                self.root.ids.link_field.text = "paste_your_web_link_here"
+            if account_name != 'phone':
+                self.action_name = 'view'
+            self.action_name = "#Empty"
+            self.account_link = "#Empty"
+
+            Clock.schedule_once(lambda dt: self.dialog_spin.dismiss(), .1)
+            Clock.schedule_once(lambda dt: self.screen_capture(self.edit_screen), .1)
+        else:
+            Clock.schedule_once(lambda dt: toast(data['message']), .1)
 
     def show_account_dialog(self):
         if not self.account_dialog:
@@ -362,6 +468,16 @@ class MainApp(MDApp):
     def open_link(self, url):
         webbrowser.open(url)
 
+    def call(self, phone):
+        # from call import Actions as AC
+        from beem import call as CL
+        CL.Actions.call(CL.Actions(), phone)
+
+    def add_C(self):
+        from beem import add_contact
+
+        add_contact.add_contact('0788204327', 'Mbuya', 'mbuya@odoe')
+
     """
     
     END USER FUNCTIONS
@@ -371,21 +487,6 @@ class MainApp(MDApp):
     """
     CONTACT FUNCTIONS
     """
-    selected_contact = StringProperty("")
-    contact_name = StringProperty("")
-    contact_email = StringProperty("")
-    contact_pic = StringProperty("")
-
-    contact_phone_status = BooleanProperty(True)
-    contact_instagram_status = BooleanProperty(True)
-    contact_whatsapp_status = BooleanProperty(True)
-    contact_github_status = BooleanProperty(True)
-    contact_linkedin_status = BooleanProperty(True)
-    contact_twitter_status = BooleanProperty(True)
-    contact_web_status = BooleanProperty(True)
-
-    social_account = DictProperty({"github": True, "whatsapp": True, "instagram": True, "web": True, "linkedin": True,
-                 "phone": True, "twitter": True})
 
     def fetch_contact_opt(self):
         self.spin_dialog()
@@ -397,6 +498,10 @@ class MainApp(MDApp):
 
         if data['code']==200:
             Clock.schedule_once(lambda dt: self.upddate_contact_info(data), 0)
+        else:
+            Clock.schedule_once(lambda dt: toast(data['message']), 0)
+            Clock.schedule_once(lambda dt: self.screen_capture("home"), 0)
+            Clock.schedule_once(lambda dt: self.dialog_spin.dismiss(), 0)
 
     def upddate_contact_info(self, data):
         contact_info = data['data']['user_info']
@@ -453,8 +558,13 @@ class MainApp(MDApp):
 
     def get_data(self):
         print(self.barcode)
-        FM.add_contact(FM(), self.user_id, self.barcode)
-        self.login_start()
+        data = FM.add_contact(FM(), self.user_id, self.barcode)
+        if data['code'] == 200:
+            self.login_start()
+        else:
+            Clock.schedule_once(lambda dt: self.dialog_spin.dismiss(), 0)
+            Clock.schedule_once(lambda dt: self.screen_capture("profile"), 0)
+            Clock.schedule_once(lambda dt: toast(data['message']), 0)
 
     """
     END OF SCAN QRCODE
@@ -519,13 +629,16 @@ class MainApp(MDApp):
         img.save(f"Qrcodes/{id_gen}.png")
 
     def show_qrcode_dialog(self):
-        if not self.qr_dialog:
-            self.qr_dialog = MDDialog(
-                title="",
-                type="custom",
-                content_cls=QRCodeDialog(),
-            )
-        self.qr_dialog.open()
+        if self.is_phone():
+            if not self.qr_dialog:
+                self.qr_dialog = MDDialog(
+                    title="",
+                    type="custom",
+                    content_cls=QRCodeDialog(),
+                )
+            self.qr_dialog.open()
+        else:
+            toast("Please add phone number below!",None, 3.0)
 
     """
         END OF QRCODES FUNCTIONS
@@ -542,6 +655,7 @@ class MainApp(MDApp):
             self.user_data = args[0]
             print(self.user_data)
         self.save_user_info_to_json()
+
 
     def save_user_info_to_json(self):
         # Define the filename

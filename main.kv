@@ -22,9 +22,11 @@ ScreenManager:
                 theme_text_color: "Custom"
                 text_color: "#0B4F6C"
 
+
             # Google Logo and Login Button
             MDFillRoundFlatIconButton:
-                text: "  Sign in with Google"
+                style: "elevated"
+                text: "Sign in with Google"
                 icon: "google"  # Icon from MDIcon
                 icon_left: True
                 md_bg_color: "#0B4F6C"
@@ -190,7 +192,8 @@ ScreenManager:
                             halign: "right"
                 MDTextField:
                     id: link_field
-                    hint_text:app.edit_hint
+                    mode: "rectangle"
+                    hint_text:"Edit link"
                     size_hint_x:.8
                     pos_hint:{"center_x":.5, "center_y":.45}
                     font_size: dp(18)
@@ -248,7 +251,7 @@ ScreenManager:
                 MDTextField:
                     id:sms_edit
                     mode: "round"
-                    hint_text:app.edit_hint
+                    hint_text:"Edit Phone"
                     size_hint_x:.8
                     pos_hint:{"center_x":.5, "center_y":.78}
                     font_size: dp(18)
@@ -268,7 +271,7 @@ ScreenManager:
                     size_hint:.5,.08
                     pos_hint:{"center_x":.5, "center_y":.64}
                     on_release:
-                        app.add_save_account()
+                        app.add_save_account_opt()
 
     MDScreen:
         name: "profile"
@@ -364,48 +367,55 @@ ScreenManager:
                         icon: "phone"
                         user_font_size: "24sp"
                         on_release:
-                            app.view_account_details('phone')
+                            app.view_account_details_opt()
+                            app.account_name = self.icon
 
                     # Instagram Icon
                     MDIconButton:
                         icon: "instagram"
                         user_font_size: "24sp"
                         on_release:
-                            app.view_account_details(self.icon)
+                            app.account_name = self.icon
+                            app.view_account_details_opt()
 
                     # WhatsApp Icon
                     MDIconButton:
                         icon: "whatsapp"
                         user_font_size: "24sp"
                         on_release:
-                            app.view_account_details('whatsapp')
+                            app.account_name = self.icon
+                            app.view_account_details_opt()
 
                     # Facebook Icon
                     MDIconButton:
                         icon: "github"
                         user_font_size: "24sp"
                         on_release:
-                            app.view_account_details(self.icon)
+                            app.account_name = self.icon
+                            app.view_account_details_opt()
 
                     # LinkedIn Icon
                     MDIconButton:
                         icon: "linkedin"
                         user_font_size: "24sp"
                         on_release:
-                            app.view_account_details(self.icon)
+                            app.account_name = self.icon
+                            app.view_account_details_opt()
 
                     # YouTube Icon
                     MDIconButton:
                         icon: "twitter"
                         user_font_size: "24sp"
                         on_release:
-                            app.view_account_details(self.icon)
+                            app.account_name = self.icon
+                            app.view_account_details_opt()
 
                     MDIconButton:
                         icon: "web"
                         user_font_size: "24sp"
                         on_release:
-                            app.view_account_details(self.icon)
+                            app.account_name = self.icon
+                            app.view_account_details_opt()
     MDScreen:
         name:"detail_scanner"
         md_bg_color:"#C6C7C4"
@@ -496,6 +506,19 @@ ScreenManager:
                         theme_text_color: "Hint"
                         pos_hint: {"center_x": 0.5}
 
+                    MDFillRoundFlatIconButton:
+                        style: "elevated"
+                        text: "Add contact"
+                        icon: "account-plus"  # Icon from MDIcon
+                        icon_left: True
+                        md_bg_color: "black"
+                        text_color: "#FFFFFF"
+                        pos_hint: {"center_x": .5}
+                        font_size: "18sp"
+                        radius: [dp(25), dp(25), dp(25), dp(25)]
+                        on_release:
+                            app.add_C()
+
                 # Social Accounts Card
                 MDCard:
                     md_bg_color: "#ffffff"
@@ -526,7 +549,8 @@ ScreenManager:
                         disabled: app.social_account[self.icon]
                         user_font_size: "24sp"
                         on_release:
-                            app.view_account_details('phone')
+                            app.account_name = self.icon
+                            app.view_account_details_contact_opt()
 
                     # Instagram Icon
                     MDIconButton:
@@ -534,7 +558,9 @@ ScreenManager:
                         disabled: app.social_account[self.icon]
                         user_font_size: "24sp"
                         on_release:
-                            app.view_account_details(self.icon)
+                            app.account_name = self.icon
+                            app.view_account_details_contact_opt()
+
 
                     # WhatsApp Icon
                     MDIconButton:
@@ -542,7 +568,8 @@ ScreenManager:
                         disabled: app.social_account[self.icon]
                         user_font_size: "24sp"
                         on_release:
-                            app.view_account_details('whatsapp')
+                            app.account_name = self.icon
+                            app.view_account_details_contact_opt()
 
                     # Facebook Icon
                     MDIconButton:
@@ -550,7 +577,8 @@ ScreenManager:
                         disabled: app.social_account[self.icon]
                         user_font_size: "24sp"
                         on_release:
-                            app.view_account_details(self.icon)
+                            app.account_name = self.icon
+                            app.view_account_details_contact_opt()
 
                     # LinkedIn Icon
                     MDIconButton:
@@ -558,7 +586,8 @@ ScreenManager:
                         disabled: app.social_account[self.icon]
                         user_font_size: "24sp"
                         on_release:
-                            app.view_account_details(self.icon)
+                            app.account_name = self.icon
+                            app.view_account_details_contact_opt()
 
                     # YouTube Icon
                     MDIconButton:
@@ -566,14 +595,16 @@ ScreenManager:
                         disabled: app.social_account[self.icon]
                         user_font_size: "24sp"
                         on_release:
-                            app.view_account_details(self.icon)
+                            app.account_name = self.icon
+                            app.view_account_details_contact_opt()
 
                     MDIconButton:
                         icon: "web"
                         disabled: app.social_account[self.icon]
                         user_font_size: "24sp"
                         on_release:
-                            app.view_account_details(self.icon)
+                            app.account_name = self.icon
+                            app.view_account_details_contact_opt()
 
 
 
@@ -586,6 +617,11 @@ ScreenManager:
 	    app.fetch_contact_opt()
 	ImageLeftWidget:
 	    source:root.image
+    CallContainer:
+        MDIconButton:
+            icon: "phone"
+            on_release:
+                app.call(root.phone)
 
 <Pic@MDCard>:
     md_bg_color:"#eaf4f4"

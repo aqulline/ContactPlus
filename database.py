@@ -14,6 +14,14 @@ class FirebaseManager:
         self.app_initialized = False
         self.database_url = 'https://farmzon-abdcb.firebaseio.com/'
 
+    def refresh_user_info(self, user_data):
+        filename = 'user_info.json'
+        print("Looooooggggggggggs", user_data)
+        # Write user data to the JSON file
+        with open(filename, 'w') as json_file:
+            json.dump(user_data, json_file, indent=4)
+
+
     def remove_comma(self, number):
 
         new_number = str(number).replace(',', '')
@@ -239,6 +247,21 @@ class FirebaseManager:
 
             # Store the account data
             account_ref.set(account_data)
+
+            if account_name == 'phone':
+                account_ref = db.reference("ContactP").child("Users").child(user_id).child('User_info')
+
+                # Data to be added
+                account_data = {
+                    "account_phone": account_link,
+                }
+
+                # Store the account data
+                account_ref.update(account_data)
+
+                self.app_initialized = False
+                data = self.fetch_user_info(user_id)
+                self.refresh_user_info(data['data'])
 
             # Return success status
             return {

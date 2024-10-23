@@ -1,26 +1,24 @@
 #:import sm kivy.uix.screenmanager
+#:import Clipboard kivy.core.clipboard.Clipboard
 ScreenManager:
     id:manager
     transition:sm.FadeTransition(duration=.0)
     MDScreen:
         name: "login"
+        md_bg_color:"#eaf4f4"
         MDFloatLayout:
             # Background color or image
-            canvas.before:
-                Color:
-                    rgba: 0.95, 0.95, 0.95, 1  # Light grey background
-                Rectangle:
-                    pos: self.pos
-                    size: self.size
-
             # Welcome Text
+            FitImage:
+                source:"https://img.posterstore.com/zoom/98.jpg?auto=compress%2Cformat&fit=max&w=3840"
             MDLabel:
                 text: "Welcome Back"
                 halign: "center"
-                font_style: "H5"
-                pos_hint: {"center_x": .5, "center_y": .8}
+                font_name:'components/fonts/Gill Sans.otf'
+                font_style: "H4"
+                pos_hint: {"center_x": .5, "center_y": .9}
                 theme_text_color: "Custom"
-                text_color: "#0B4F6C"
+                text_color: "black"
 
 
             # Google Logo and Login Button
@@ -29,10 +27,11 @@ ScreenManager:
                 text: "Sign in with Google"
                 icon: "google"  # Icon from MDIcon
                 icon_left: True
-                md_bg_color: "#0B4F6C"
+                md_bg_color: "black"
+                font_name:'components/fonts/Gill Sans.otf'
                 text_color: "#FFFFFF"
                 size_hint: .7, .08
-                pos_hint: {"center_x": .5, "center_y": .4}
+                pos_hint: {"center_x": .5, "center_y": .1}
                 font_size: "18sp"
                 radius: [dp(25), dp(25), dp(25), dp(25)]
                 on_release:
@@ -46,6 +45,7 @@ ScreenManager:
             MDTopAppBar:
                 title:"Contacts"
                 elevation: 1
+                font_name:'components/fonts/Gill Sans.otf'
                 type_height: "small"
                 md_bg_color: "#eaf4f4"
                 specific_text_color: "black"
@@ -60,6 +60,7 @@ ScreenManager:
                 MDTextField:
                     id: search_field
                     hint_text: "Search Contacts"
+                    font_name:'components/fonts/Gill Sans.otf'
                     size_hint_x: 0.85  # Adjust size for the text field
                     size_hint_y: 1.1  # Adjust size for the text field
                     mode: "round"  # Rounded design
@@ -100,6 +101,7 @@ ScreenManager:
             MDTopAppBar:
                 title:"Edit Link"
                 elevation: 1
+                font_name:'components/fonts/Gill Sans.otf'
                 md_bg_color: "#eaf4f4"
                 specific_text_color: "black"
             Widget:
@@ -155,6 +157,7 @@ ScreenManager:
                         MDLabel:
                             text: app.link_title
                             font_style: "Subtitle2"
+                            font_name:'components/fonts/Gill Sans.otf'
                             theme_text_color: "Primary"
                             halign: "left"
                             size_hint_y: None
@@ -165,6 +168,7 @@ ScreenManager:
                             text: app.link_description
                             font_style: "Body2"
                             theme_text_color: "Secondary"
+                            font_name:'components/fonts/Gill Sans.otf'
                             halign: "left"
                             size_hint_y: None
                             height: self.texture_size[1]
@@ -180,6 +184,7 @@ ScreenManager:
                         MDLabel:
                             text: app.link_domain
                             font_style: "Caption"
+                            font_name:'components/fonts/Gill Sans.otf'
                             theme_text_color: "Hint"
                             halign: "left"
                             size_hint_x: 0.7
@@ -188,6 +193,7 @@ ScreenManager:
                         MDLabel:
                             text: app.link_url
                             font_style: "Caption"
+                            font_name:'components/fonts/Gill Sans.otf'
                             theme_text_color: "Hint"
                             halign: "right"
                 MDTextField:
@@ -195,6 +201,7 @@ ScreenManager:
                     mode: "rectangle"
                     hint_text:"Edit link"
                     size_hint_x:.8
+                    font_name:'components/fonts/Gill Sans.otf'
                     pos_hint:{"center_x":.5, "center_y":.45}
                     font_size: dp(18)
                     foreground_color: 53 / 225, 59 / 225, 60 / 225, 1
@@ -212,6 +219,7 @@ ScreenManager:
                     text:"Save"
                     md_bg_color:  "black"
                     text_color: "#FFFFFF"
+                    font_name:'components/fonts/Gill Sans.otf'
                     size_hint:.5,.08
                     pos_hint:{"center_x":.5, "center_y":.3}
                     on_release:
@@ -226,6 +234,7 @@ ScreenManager:
             MDTopAppBar:
                 title:"Edit phone"
                 elevation: 1
+                font_name:'components/fonts/Gill Sans.otf'
                 md_bg_color: "#eaf4f4"
                 specific_text_color: "black"
             MDFloatLayout:
@@ -242,6 +251,7 @@ ScreenManager:
                         id: story_label
                         text: app.account_link  # Your story text goes here
                         theme_text_color: "Custom"
+                        font_name:'components/fonts/Gill Sans.otf'
                         text_color: "black"
                         font_style: "Body1"
                         halign: "center"
@@ -253,6 +263,7 @@ ScreenManager:
                     mode: "round"
                     hint_text:"Edit Phone"
                     size_hint_x:.8
+                    font_name:'components/fonts/Gill Sans.otf'
                     pos_hint:{"center_x":.5, "center_y":.78}
                     font_size: dp(18)
                     foreground_color: 53 / 225, 59 / 225, 60 / 225, 1
@@ -268,6 +279,7 @@ ScreenManager:
                     text:"Save"
                     md_bg_color:  "black"
                     text_color: "#FFFFFF"
+                    font_name:'components/fonts/Gill Sans.otf'
                     size_hint:.5,.08
                     pos_hint:{"center_x":.5, "center_y":.64}
                     on_release:
@@ -280,6 +292,7 @@ ScreenManager:
             orientation: "vertical"
             MDTopAppBar:
                 title:"Profile"
+                font_name:'components/fonts/Gill Sans.otf'
                 elevation: 1
                 md_bg_color: "#eaf4f4"
                 specific_text_color: "black"
@@ -317,6 +330,7 @@ ScreenManager:
                     # User's name
                     MDLabel:
                         text: app.user_name
+                        font_name:'components/fonts/Gill Sans.otf'
                         halign: "center"
                         font_style: "H6"
                         theme_text_color: "Primary"
@@ -325,6 +339,7 @@ ScreenManager:
                     # User's email
                     MDLabel:
                         text: app.user_email
+                        font_name:'components/fonts/Gill Sans.otf'
                         halign: "center"
                         font_style: "Subtitle2"
                         theme_text_color: "Secondary"
@@ -334,6 +349,7 @@ ScreenManager:
                     # User's email verification status
                     MDLabel:
                         text: "Email Verified: Yes"
+                        font_name:'components/fonts/Gill Sans.otf'
                         halign: "center"
                         font_style: "Caption"
                         theme_text_color: "Hint"
@@ -429,6 +445,7 @@ ScreenManager:
             padding: dp(20)
 
             MDTopAppBar:
+                font_name:'components/fonts/Gill Sans.otf'
                 title: "Add Contact"
                 elevation: 1
                 md_bg_color: "white"
@@ -446,6 +463,7 @@ ScreenManager:
             orientation: "vertical"
             MDTopAppBar:
                 title:app.contact_name
+                font_name:'components/fonts/Gill Sans.otf'
                 elevation: 1
                 md_bg_color: "#eaf4f4"
                 specific_text_color: "black"
@@ -485,7 +503,9 @@ ScreenManager:
                     MDLabel:
                         text: app.contact_name
                         halign: "center"
+                        font_name:'components/fonts/Gill Sans.otf'
                         font_style: "H6"
+                        font_name:'components/fonts/Gill Sans.otf'
                         theme_text_color: "Primary"
                         pos_hint: {"center_x": 0.5}
 
@@ -493,7 +513,9 @@ ScreenManager:
                     MDLabel:
                         text: app.contact_email
                         halign: "center"
+                        font_name:'components/fonts/Gill Sans.otf'
                         font_style: "Subtitle2"
+                        font_name:'components/fonts/Gill Sans.otf'
                         theme_text_color: "Secondary"
                         pos_hint: {"center_x": 0.5}
                         padding_y: 10
@@ -502,6 +524,7 @@ ScreenManager:
                     MDLabel:
                         text: "Email Verified: Yes"
                         halign: "center"
+                        font_name:'components/fonts/Gill Sans.otf'
                         font_style: "Caption"
                         theme_text_color: "Hint"
                         pos_hint: {"center_x": 0.5}
@@ -511,6 +534,7 @@ ScreenManager:
                         text: "Add contact"
                         icon: "account-plus"  # Icon from MDIcon
                         icon_left: True
+                        font_name:'components/fonts/Gill Sans.otf'
                         md_bg_color: "black"
                         text_color: "#FFFFFF"
                         pos_hint: {"center_x": .5}
@@ -610,10 +634,12 @@ ScreenManager:
 
 <Contacts>:
 	text: root.name
+	font_name:'components/fonts/Gill Sans.otf'
 	on_release:
 	    print(root.contact_id)
 	    app.selected_contact = root.contact_id
 	    app.screen_capture("contact")
+	    app.contact_phone = root.phone
 	    app.fetch_contact_opt()
 	ImageLeftWidget:
 	    source:root.image
@@ -656,6 +682,7 @@ ScreenManager:
         bold:True
 #        font_name:'components/fonts/Gill Sans.otf'
         theme_text_color: "Custom"
+        font_name:'components/fonts/Gill Sans.otf'
         text_color:78/255, 82/255, 84/255, 1
         pos_hint: {'center_x': .5, 'center_y': 1}
 
@@ -670,12 +697,14 @@ ScreenManager:
         text: app.account_name # Example name, this should be dynamic
         font_style: "H6"
         theme_text_color: "Primary"
+        font_name:'components/fonts/Gill Sans.otf'
         halign: "left"
 
     # Account Link Label
     MDLabel:
         text: app.account_link
         font_style: "Subtitle2"
+        font_name:'components/fonts/Gill Sans.otf'
         theme_text_color: "Secondary"
         halign: "left"
 
@@ -705,6 +734,7 @@ ScreenManager:
         font_style: "H5"
         halign: "center"
         theme_text_color: "Primary"
+        font_name:'components/fonts/Gill Sans.otf'
         size_hint_y: None
         height: dp(50)
 
@@ -714,3 +744,4 @@ ScreenManager:
         size_hint: None, None
         size: dp(200), dp(200)
         pos_hint: {"center_x": 0.5}
+

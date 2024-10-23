@@ -8,6 +8,7 @@ import qrcode
 from PIL import Image
 from camera4kivy import Preview
 from kivy.base import EventLoop
+from kivy.core.clipboard import Clipboard
 from kivy.properties import NumericProperty, StringProperty, DictProperty, BooleanProperty, ObjectProperty
 from kivymd.app import MDApp
 from kivy.core.window import Window
@@ -100,23 +101,18 @@ class MainApp(MDApp):
     link_site_name = StringProperty("")
     link_domain = StringProperty("")
 
+    # Contact vars
     selected_contact = StringProperty("")
+    contact_phone = StringProperty("")
     contact_name = StringProperty("")
     contact_email = StringProperty("")
     contact_pic = StringProperty("")
 
-    contact_phone_status = BooleanProperty(True)
-    contact_instagram_status = BooleanProperty(True)
-    contact_whatsapp_status = BooleanProperty(True)
-    contact_github_status = BooleanProperty(True)
-    contact_linkedin_status = BooleanProperty(True)
-    contact_twitter_status = BooleanProperty(True)
-    contact_web_status = BooleanProperty(True)
-
+    # account validator
     social_account = DictProperty({"github": True, "whatsapp": True, "instagram": True, "web": True, "linkedin": True,
                                    "phone": True, "twitter": True})
 
-
+    # account view vars
     action_name = StringProperty("view")
     account_link = StringProperty("#Empty")
     account_name = StringProperty("")
@@ -124,13 +120,12 @@ class MainApp(MDApp):
     edit_hint = StringProperty("Edit link")
     edit_screen = StringProperty("edit_link")
 
+    # save Contacts
     local_contacts = DictProperty({})
 
 
     def on_start(self):
-        print(self.size_x, self.size_y)
         self.keyboard_hooker()
-        print()
         if utils.platform == 'android':
             self.request_android_permissions()
 
@@ -179,6 +174,40 @@ class MainApp(MDApp):
         USER FUNCTIONS (CONTACTS)
     
     """
+
+    @mainthread
+    def user_data_getter(self):
+        self.user_id = self.user_data['sub']
+        self.user_name = self.user_data['name']
+        self.user_email = self.user_data['email']
+        self.user_pic = self.user_data['picture'] if self.user_data[
+                                                         'picture'] != '' else f"https://storage.googleapis.com/farmzon-abdcb.appspot.com/Letters/{self.user_name['name'][0]}"
+        self.user_qrcode = f"Qrcodes/{self.user_id}.png"
+
+    def refresh_user_opt(self):
+        thr = threading.Thread(target=self.refresh_user_local)
+        thr.start()
+
+    def refresh_user_local(self):
+        data = FM.fetch_user_profile(FM(), self.user_id)
+
+        if data['code'] == 200:
+            FM.refresh_user_info(FM(), data['data']['user_info'])
+        else:
+            pass
+
+    def save_user_info_to_json(self):
+        # Define the filename
+        filename = 'user_info.json'
+
+        # Write user data to the JSON file
+        with open(filename, 'w') as json_file:
+            json.dump(self.user_data, json_file, indent=4)  # Using indent for pretty printing
+
+        self.qr_code(self.user_data['sub'])
+        self.login_optimization()
+        FM.register_user(FM(), self.user_data)
+        print(f"User information has been written to {filename}.")
 
     @mainthread
     def login_optimization(self):
@@ -324,7 +353,10 @@ class MainApp(MDApp):
                 self.root.ids.link_field.text = "https://www.instagram.com/enter_username_here"
             elif account_name == 'linkedin':
                 self.edit_screen = "edit_link"
-                self.root.ids.link_field.text = "https://www.linkedin.com/in/enter_user_name_here_or_paste_link"
+                # self.root.ids.link_field.text = "https://www.linkedin.com/in/enter_user_name_here_or_paste_link"
+                def link_quick():
+                    self.root.ids.link_field.text = "https://www.linkedin.com/in/enter_user_name_here_or_paste_link"
+                Clock.schedule_once(lambda dt: link_quick(), 0)
             elif account_name == 'twitter':
                 self.edit_screen = "edit_link"
                 self.root.ids.link_field.text = "https://x.com/enter_user_name_here_or_paste_link"
@@ -375,7 +407,10 @@ class MainApp(MDApp):
                 self.root.ids.link_field.text = "https://www.instagram.com/enter_username_here"
             elif account_name == 'linkedin':
                 self.edit_screen = "edit_link"
-                self.root.ids.link_field.text = "https://www.linkedin.com/in/enter_user_name_here_or_paste_link"
+                @mainthread
+                def link_quick():
+                    self.root.ids.link_field.text = "https://www.linkedin.com/in/enter_user_name_here_or_paste_link"
+                Clock.schedule_once(lambda dt: link_quick(), 0)
             elif account_name == 'twitter':
                 self.edit_screen = "edit_link"
                 self.root.ids.link_field.text = "https://x.com/enter_user_name_here_or_paste_link"
@@ -476,7 +511,12 @@ class MainApp(MDApp):
     def add_C(self):
         from beem import add_contact
 
-        add_contact.add_contact('0788204327', 'Mbuya', 'mbuya@odoe')
+        Clipboard.copy(self.user_name)
+        Clipboard.copy(self.contact_phone)
+
+        toast("User name and phone is copied to the clipboard!, just paste")
+
+        add_contact.add_contact('Mbuya', '0788204327', 'mbuya@gmail.com')
 
     """
     
@@ -570,45 +610,6 @@ class MainApp(MDApp):
     END OF SCAN QRCODE
     """
 
-
-    """
-    SCREEN FUNCTIONS
-    """
-
-    def screen_capture(self, screen):
-        sm = self.root
-        sm.current = screen
-        if screen == 'detail_scanner':
-            return 0
-        elif screen in self.screens:
-            pass
-        else:
-            self.screens.append(screen)
-        print(self.screens)
-        self.screens_size = len(self.screens) - 1
-        self.current = self.screens[len(self.screens) - 1]
-        print(f'size {self.screens_size}')
-        print(f'current screen {screen}')
-
-    def screen_leave(self):
-        print(f"your were in {self.current}")
-        last_screens = self.current
-        self.screens.remove(last_screens)
-        print(self.screens)
-        self.screens_size = len(self.screens) - 1
-        self.current = self.screens[len(self.screens) - 1]
-        self.screen_capture(self.current)
-
-    """
-        END OF SCREEN FUNCTIONS
-    """
-
-
-    """
-        GOOGLE AUTHENTICATION FUNCTIONS
-    
-    """
-
     """
     
         QRCODES FUCNTIONS
@@ -644,6 +645,12 @@ class MainApp(MDApp):
         END OF QRCODES FUNCTIONS
     
     """
+
+    """
+            GOOGLE AUTHENTICATION FUNCTIONS
+
+    """
+
     def after_login(self, *args):
         print(args)
         if utils.platform == 'android':
@@ -656,22 +663,8 @@ class MainApp(MDApp):
             print(self.user_data)
         self.save_user_info_to_json()
 
-
-    def save_user_info_to_json(self):
-        # Define the filename
-        filename = 'user_info.json'
-
-        # Write user data to the JSON file
-        with open(filename, 'w') as json_file:
-            json.dump(self.user_data, json_file, indent=4)  # Using indent for pretty printing
-
-        self.qr_code(self.user_data['sub'])
-        self.login_optimization()
-        FM.register_user(FM(), self.user_data)
-        print(f"User information has been written to {filename}.")
-
     def erro_login(self, *args):
-        print("Booo!!")
+        toast("failed to login!")
 
     def login(self):
         # Define the filename for the user info
@@ -695,20 +688,44 @@ class MainApp(MDApp):
         # If the user is not in the file, proceed with Google login
         login_google()
 
-    @mainthread
-    def user_data_getter(self):
-        self.user_id = self.user_data['sub']
-        self.user_name = self.user_data['name']
-        self.user_email = self.user_data['email']
-        self.user_pic = self.user_data['picture'] if self.user_data['picture'] != '' else f"https://storage.googleapis.com/farmzon-abdcb.appspot.com/Letters/{self.user_name['name'][0]}"
-        self.user_qrcode = f"Qrcodes/{self.user_id}.png"
-
     def logout(self):
         logout_google(self.erro_login)
 
     """
         END OF GOOGLE AUTHENTICATION FUNCTIONS
     
+    """
+
+    """
+    SCREEN FUNCTIONS
+    """
+
+    def screen_capture(self, screen):
+        sm = self.root
+        sm.current = screen
+        if screen == 'detail_scanner':
+            return 0
+        elif screen in self.screens:
+            pass
+        else:
+            self.screens.append(screen)
+        print(self.screens)
+        self.screens_size = len(self.screens) - 1
+        self.current = self.screens[len(self.screens) - 1]
+        print(f'size {self.screens_size}')
+        print(f'current screen {screen}')
+
+    def screen_leave(self):
+        print(f"your were in {self.current}")
+        last_screens = self.current
+        self.screens.remove(last_screens)
+        print(self.screens)
+        self.screens_size = len(self.screens) - 1
+        self.current = self.screens[len(self.screens) - 1]
+        self.screen_capture(self.current)
+
+    """
+        END OF SCREEN FUNCTIONS
     """
 
     def build(self):

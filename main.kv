@@ -15,7 +15,7 @@ ScreenManager:
                 text: "Welcome Back"
                 halign: "center"
                 font_name:'components/fonts/Gill Sans.otf'
-                font_style: "H4"
+                font_style: "H6"
                 pos_hint: {"center_x": .5, "center_y": .9}
                 theme_text_color: "Custom"
                 text_color: "black"
@@ -24,8 +24,9 @@ ScreenManager:
             # Google Logo and Login Button
             MDFillRoundFlatIconButton:
                 style: "elevated"
-                text: "Sign in with Google"
+                text: "Login with Google"
                 icon: "google"  # Icon from MDIcon
+                icon_color: "blue"
                 icon_left: True
                 md_bg_color: "black"
                 font_name:'components/fonts/Gill Sans.otf'
@@ -71,7 +72,8 @@ ScreenManager:
                     hint_text_color_focus: [0.4, 0.4, 0.4, 1]  # Darker grey when focused
                     text_color: [0, 0, 0, 1]  # Black text color
                     padding: sp(10), sp(5)
-                    on_text: app.search_contacts(self.text)  # Call search function on text change
+                    on_text:
+                        app.search_contacts(self.text)  # Call search function on text change
 
                 # Search Icon Button
                 MDIconButton:
@@ -459,6 +461,10 @@ ScreenManager:
     MDScreen:
         name: "contact"
         md_bg_color: "#eaf4f4"
+        on_enter:
+            app.personal_or_contact = False
+        on_leave:
+            app.personal_or_contact = True
         MDBoxLayout:
             orientation: "vertical"
             MDTopAppBar:
@@ -707,6 +713,13 @@ ScreenManager:
         font_name:'components/fonts/Gill Sans.otf'
         theme_text_color: "Secondary"
         halign: "left"
+    MDRaisedButton:
+        text: "Edit" if app.personal_or_contact else ("Call" if app.account_name == "phone" else "View")
+        theme_text_color:"Custom"
+        text_color:"white"
+        md_bg_color:"black"
+        on_release:
+            app.edit_link_callback() if app.personal_or_contact else (app.call(app.account_link) if app.account_name == "phone" else app.open_link(app.account_link))
 
 <QRCodeDialog>:
     orientation: "vertical"

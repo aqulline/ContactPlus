@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import threading
 from time import sleep
 
@@ -123,9 +124,12 @@ class MainApp(MDApp):
     # save Contacts
     local_contacts = DictProperty({})
 
+    personal_or_contact = BooleanProperty(True)
+
 
     def on_start(self):
         self.keyboard_hooker()
+        Clock.schedule_once(lambda dt: self.login(), .1)
         if utils.platform == 'android':
             self.request_android_permissions()
 
@@ -183,6 +187,7 @@ class MainApp(MDApp):
         self.user_pic = self.user_data['picture'] if self.user_data[
                                                          'picture'] != '' else f"https://storage.googleapis.com/farmzon-abdcb.appspot.com/Letters/{self.user_name['name'][0]}"
         self.user_qrcode = f"Qrcodes/{self.user_id}.png"
+        self.refresh_user_opt()
 
     def refresh_user_opt(self):
         thr = threading.Thread(target=self.refresh_user_local)
@@ -200,14 +205,16 @@ class MainApp(MDApp):
         # Define the filename
         filename = 'user_info.json'
 
-        # Write user data to the JSON file
-        with open(filename, 'w') as json_file:
-            json.dump(self.user_data, json_file, indent=4)  # Using indent for pretty printing
+        data = FM.register_user(FM(), self.user_data)
+        if  data['code'] == 200:
+            # Write user data to the JSON file
+            with open(filename, 'w') as json_file:
+                json.dump(self.user_data, json_file, indent=4)  # Using indent for pretty printing
 
-        self.qr_code(self.user_data['sub'])
-        self.login_optimization()
-        FM.register_user(FM(), self.user_data)
-        print(f"User information has been written to {filename}.")
+            self.qr_code(self.user_data['sub'])
+            print(f"User information has been written to {filename}.")
+        else:
+            toast(data['message'], 4)
 
     @mainthread
     def login_optimization(self):
@@ -215,14 +222,18 @@ class MainApp(MDApp):
         thr = threading.Thread(target=self.login_start)
         thr.start()
 
+    def local_login_optimization(self):
+        thr = threading.Thread(target=self.login_start)
+        thr.start()
+
     def login_start(self):
+        self.save_user_info_to_json()
         self.user_data_getter()
         Clock.schedule_once(lambda dt: self.add_contacts(), .1)
-        Clock.schedule_once(lambda dt: self.dialog_spin.dismiss(), .1)
+        Clock.schedule_once(lambda dt: self.dialog_spin.dismiss() if self.dialog_spin is not None else print(), .1)
         Clock.schedule_once(lambda dt: self.screen_capture('home'), .1)
 
     def opt_sync_contact(self):
-        self.spin_dialog()
         thr = threading.Thread(target=self.sync_contact)
         thr.start()
 
@@ -303,10 +314,29 @@ class MainApp(MDApp):
         thr = threading.Thread(target=self.add_save_account)
         thr.start()
 
+    def validate_phone(self, phone_number):
+        # Regular expression pattern for a valid Tanzanian phone number
+        pattern = r'^0[67][0-9]{8}$'
+
+        # Use re.match to check if the phone number matches the pattern
+        if re.match(pattern, phone_number):
+            return True
+        else:
+            return False
+
     def add_save_account(self):
-        FM.add_account(FM(), self.user_id, self.account_name, self.account_link)
-        Clock.schedule_once(lambda dt: self.dialog_spin.dismiss(), .1)
-        Clock.schedule_once(lambda dt: self.screen_capture("profile"), .1)
+        if self.account_name == 'phone':
+            if not self.validate_phone(self.account_link):
+                Clock.schedule_once(lambda dt: toast("Enter a valid phone"), .1)
+
+                return
+        if self.account_link != '':
+            FM.add_account(FM(), self.user_id, self.account_name, self.account_link)
+            Clock.schedule_once(lambda dt: self.dialog_spin.dismiss(), .1)
+            Clock.schedule_once(lambda dt: self.screen_capture("profile"), .1)
+        else:
+            Clock.schedule_once(lambda dt: self.dialog_spin.dismiss(), .1)
+            Clock.schedule_once(lambda dt: toast("Enter a valid url"), .1)
 
     def opt_preview(self):
         thr = threading.Thread(target=self.preview_link)
@@ -321,6 +351,11 @@ class MainApp(MDApp):
         self.spin_dialog()
         thr = threading.Thread(target=self.view_account_details_contact)
         thr.start()
+
+    @mainthread
+    def link_quick(self, url):
+        self.root.ids.link_field.text = url
+
 
     def view_account_details(self):
         data = FM.fetch_account_info(FM(), self.user_id, self.account_name)
@@ -347,25 +382,22 @@ class MainApp(MDApp):
                 self.edit_screen = "edit_phone"
             elif account_name == 'whatsapp':
                 self.edit_screen = "edit_link"
-                self.root.ids.link_field.text = "https://wa.me/255replacethiswithphone"
+                self.link_quick("https://wa.me/255replacethiswithphone")
             elif account_name == 'instagram':
                 self.edit_screen = "edit_link"
-                self.root.ids.link_field.text = "https://www.instagram.com/enter_username_here"
+                self.link_quick("https://www.instagram.com/enter_username_here")
             elif account_name == 'linkedin':
                 self.edit_screen = "edit_link"
-                # self.root.ids.link_field.text = "https://www.linkedin.com/in/enter_user_name_here_or_paste_link"
-                def link_quick():
-                    self.root.ids.link_field.text = "https://www.linkedin.com/in/enter_user_name_here_or_paste_link"
-                Clock.schedule_once(lambda dt: link_quick(), 0)
+                self.link_quick( "https://www.linkedin.com/in/enter_user_name_here_or_paste_link")
             elif account_name == 'twitter':
                 self.edit_screen = "edit_link"
-                self.root.ids.link_field.text = "https://x.com/enter_user_name_here_or_paste_link"
+                self.link_quick("https://x.com/enter_user_name_here_or_paste_link")
             elif account_name == 'github':
                 self.edit_screen = "edit_link"
-                self.root.ids.link_field.text = "https://github.com/enter_user_name_here_or_paste_link"
+                self.link_quick("https://github.com/enter_user_name_here_or_paste_link")
             elif account_name == 'web':
                 self.edit_screen = "edit_link"
-                self.root.ids.link_field.text = "paste_your_web_link_here"
+                self.link_quick("paste_your_web_link_here")
             if account_name != 'phone':
                 self.action_name = 'view'
             self.action_name = "#Empty"
@@ -375,6 +407,7 @@ class MainApp(MDApp):
             Clock.schedule_once(lambda dt: self.screen_capture(self.edit_screen), .1)
         else:
             Clock.schedule_once(lambda dt: toast(data['message']), .1)
+            Clock.schedule_once(lambda dt: self.dialog_spin.dismiss(), .1)
 
     def view_account_details_contact(self):
         data = FM.fetch_account_info(FM(), self.selected_contact, self.account_name)
@@ -436,19 +469,7 @@ class MainApp(MDApp):
                 title="View Details",
                 type="custom",
                 content_cls=View_account_details(),
-                buttons=[
-                    MDFlatButton(
-                        text="Edit",
-                        theme_text_color="Custom",
-                        text_color=self.theme_cls.primary_color,
-                        on_release=(lambda dt: self.edit_link_callback())
-                    ),
-                    MDFlatButton(
-                        text=self.action_name,
-                        theme_text_color="Custom",
-                        text_color=self.theme_cls.primary_color,
-                    ),
-                ],
+
             )
         self.account_dialog.open()
 
@@ -511,22 +532,21 @@ class MainApp(MDApp):
     def add_C(self):
         from beem import add_contact
 
-        Clipboard.copy(self.user_name)
-        Clipboard.copy(self.contact_phone)
+        Clipboard.copy(f"{self.contact_phone} {self.user_name}")
 
-        toast("User name and phone is copied to the clipboard!, just paste")
+        toast("User name and phone is copied to the clipboard!, just paste", 5)
 
         add_contact.add_contact('Mbuya', '0788204327', 'mbuya@gmail.com')
 
     """
-    
     END USER FUNCTIONS
-    
     """
 
     """
     CONTACT FUNCTIONS
     """
+    def search_contacts(self):
+        pass
 
     def fetch_contact_opt(self):
         self.spin_dialog()
@@ -661,7 +681,7 @@ class MainApp(MDApp):
         else:
             self.user_data = args[0]
             print(self.user_data)
-        self.save_user_info_to_json()
+        self.login_optimization()
 
     def erro_login(self, *args):
         toast("failed to login!")
@@ -680,9 +700,11 @@ class MainApp(MDApp):
                 if user_email:
                     print(f"User found: {user_email}")
                     self.user_data = user_data
+                    self.add_contacts()
+                    self.screen_capture("home")
                     # Optionally, you can call a function to proceed to the home screen
 
-                    self.login_optimization()
+                    self.local_login_optimization()
                     return
 
         # If the user is not in the file, proceed with Google login

@@ -46,19 +46,26 @@ class FirebaseManager:
                 return "No Internet!"
 
     def register_user(self, data):
-        """Register a new user in the Firebase database under 'Users'."""
-        self.initialize_firebase()  # Ensure Firebase is initialized
+        """Register a new user in the Firebase database under 'Users'. If the user already exists, skip the registration."""
+
+        # Initialize Firebase (ensure it is initialized)
+        self.initialize_firebase()
         if not self.app_initialized:
             return {"status": "error", "code": 500, "message": "Firebase initialization failed"}
 
         try:
-            # Reference to the user data in the database
+            # Reference to the user's data node in the database
             user_ref = db.reference("ContactP").child("Users").child(data['sub']).child('User_info')
 
-            # Store user data
+            # Check if the user already exists in the database
+            if user_ref.get():
+                # If user data exists, skip registration
+                return {"status": "success", "code": 200, "message": "User already exists. No action needed."}
+
+            # If the user does not exist, register the new user
             user_ref.set(data)
 
-            # Return success status
+            # Return success status after successful registration
             return {"status": "success", "code": 200, "message": "User registered successfully"}
 
         except Exception as e:

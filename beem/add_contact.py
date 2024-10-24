@@ -34,4 +34,4 @@ def add_contact(name, phone, email):
 
 
 # Example usage: Adding a contact with name, phone number, and email
-add_contact("Mbuya", "0788204327", "mbuya@gmail.com")
+# add_contact("Mbuya", "0788204327", "mbuya@gmail.com")

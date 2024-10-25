@@ -366,6 +366,47 @@ class FirebaseManager:
                 "message": f"An error occurred: {str(e)}"
             }
 
+    def listen_to_contacts(self, user_id):
+        """Set up a listener for changes in the user's contacts and fetch updates when any change occurs."""
+
+        # Initialize Firebase if not already done
+        self.initialize_firebase()
+        if not self.app_initialized:
+            print({"status": "error", "code": 500, "message": "Firebase initialization failed"})
+            return {"status": "error", "code": 500, "message": "Firebase initialization failed"}
+
+        try:
+            # Reference to the user's contacts in the database
+            contacts_ref = db.reference("ContactP").child("Users").child(user_id).child('Contacts')
+
+            # Define the listener callback function
+            def listener_callback(event):
+                # Log that a change has been detected
+                print("Change detected in contacts. Fetching updated contacts...")
+
+                # Fetch updated contacts data
+                # response = self.fetch_contacts(user_id)
+
+                # Log or process the response as necessary
+                # print(response)
+                from main import MainApp
+
+                MainApp.opt_sync_contact(MainApp())
+                # If needed, you can add additional logic here to handle the response
+
+            # Start listening to changes in the Contacts node
+            contacts_ref.listen(listener_callback)
+            print({"status": "success", "code": 200, "message": "Listener set up successfully for user contacts"})
+            # Return success status to indicate that the listener has been set up
+            return {"status": "success", "code": 200, "message": "Listener set up successfully for user contacts"}
+
+        except Exception as e:
+            # Handle any exceptions that occur during the listener setup
+            print({"status": "error", "code": 500,
+                    "message": f"An error occurred while setting up the listener: {str(e)}"})
+            return {"status": "error", "code": 500,
+                    "message": f"An error occurred while setting up the listener: {str(e)}"}
+
 # data = {'sub': '114248626444216198151', 'name': 'Aqeglipa Mbuya', 'given_name': 'Aqeglipa', 'family_name': 'Mbuya', 'picture': 'https://lh3.googleusercontent.com/a/ACg8ocIT_d6PJsuw4KxtCBnprPf-jLSjDva0vCP6UJMSmzvE3qnwaEvY=s96-c', 'email': 'aqeglipambuya@gmail.com', 'email_verified': True}
 #
 # FirebaseManager.register_user(FirebaseManager(), data)

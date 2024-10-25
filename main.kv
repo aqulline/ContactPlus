@@ -641,6 +641,8 @@ ScreenManager:
 <Contacts>:
 	text: root.name
 	font_name:'components/fonts/Gill Sans.otf'
+	style:"elevated"
+	elevation:3
 	on_release:
 	    print(root.contact_id)
 	    app.selected_contact = root.contact_id
@@ -649,6 +651,13 @@ ScreenManager:
 	    app.fetch_contact_opt()
 	ImageLeftWidget:
 	    source:root.image
+	    radius: [dp(50), dp(50), dp(50), dp(50)]
+	    on_release:
+            print(root.contact_id)
+            app.selected_contact = root.contact_id
+            app.screen_capture("contact")
+            app.contact_phone = root.phone
+            app.fetch_contact_opt()
     CallContainer:
         MDIconButton:
             icon: "phone"

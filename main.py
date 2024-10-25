@@ -26,6 +26,7 @@ from kivymd.uix.list import OneLineAvatarIconListItem, IRightBodyTouch
 import hyperlink_preview as HLP
 import webbrowser
 
+from plyer import notification
 from pyzbar.pyzbar import decode
 
 import GoogleKeys
@@ -133,6 +134,7 @@ class MainApp(MDApp):
         if utils.platform == 'android':
             self.request_android_permissions()
 
+
     def keyboard_hooker(self, *args):
         EventLoop.window.bind(on_keyboard=self.hook_keyboard)
 
@@ -161,7 +163,7 @@ class MainApp(MDApp):
                 else:
                     print("callback. Some permissions refused.")
 
-            request_permissions([Permission.READ_CONTACTS, Permission.WRITE_CONTACTS, Permission.CAMERA, Permission.CALL_PHONE], callback)
+            request_permissions([Permission.READ_CONTACTS, Permission.WRITE_CONTACTS, Permission.CAMERA, Permission.CALL_PHONE, Permission.POST_NOTIFICATIONS], callback)
 
     def spin_dialog(self):
         if not self.dialog_spin:
@@ -188,6 +190,22 @@ class MainApp(MDApp):
                                                          'picture'] != '' else f"https://storage.googleapis.com/farmzon-abdcb.appspot.com/Letters/{self.user_name['name'][0]}"
         self.user_qrcode = f"Qrcodes/{self.user_id}.png"
         self.refresh_user_opt()
+        self.notifi()
+
+    def fetch_user_local(self):
+        filename = 'user_info.json'
+
+        # Check if the file exists
+        if os.path.exists(filename):
+            # Read the user info from the JSON file
+            with open(filename, 'r') as json_file:
+                user_data = json.load(json_file)
+                # Assuming the user data has an email field
+                user_email = user_data.get('email')
+                if user_email:
+                    print(f"User found: {user_email}")
+                    self.user_data = user_data
+                    self.user_data_getter()
 
     def refresh_user_opt(self):
         thr = threading.Thread(target=self.refresh_user_local)
@@ -532,7 +550,7 @@ class MainApp(MDApp):
     def add_C(self):
         from beem import add_contact
 
-        Clipboard.copy(f"{self.contact_phone} {self.user_name}")
+        Clipboard.copy(f"{self.contact_phone} {self.contact_name}")
 
         toast("User name and phone is copied to the clipboard!, just paste", 5)
 
@@ -750,11 +768,32 @@ class MainApp(MDApp):
         END OF SCREEN FUNCTIONS
     """
 
+    my_stream = None
+
+    def stream_handler(self, message):
+        if True:
+            print("La maSIA!!!!!!!!!!!")
+            self.opt_sync_contact()
+            return notification.notify(title='New Contact', message='New contact was added')
+
+    def notifi(self):
+        try:
+            import firebase_admin
+            firebase_admin._apps.clear()
+            from firebase_admin import credentials, initialize_app, db
+            cred = credentials.Certificate("credential/farmzon-abdcb-c4c57249e43b.json")
+            initialize_app(cred, {'databaseURL': 'https://farmzon-abdcb.firebaseio.com/'}, name='worker')
+            self.my_stream = db.reference("ContactP").child("Users").child(self.user_id).child('Contacts').listen(
+                self.stream_handler)
+
+        except Exception as e:
+            print(f"you did good! {self.user_data} {e}")
+
     def build(self):
         initialize_google(self.after_login, self.erro_login,
                           client_id=GoogleKeys.client_id2,
                           client_secret=GoogleKeys.client_secret2)
         self.theme_cls.material_style = "M3"
 
-
-MainApp().run()
+if __name__ == '__main__':
+    MainApp().run()

@@ -563,7 +563,7 @@ class MainApp(MDApp):
     """
     CONTACT FUNCTIONS
     """
-    def search_contacts(self):
+    def search_contacts(self, text):
         pass
 
     def fetch_contact_opt(self):

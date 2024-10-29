@@ -127,6 +127,8 @@ class MainApp(MDApp):
 
     personal_or_contact = BooleanProperty(True)
 
+    notification_count = NumericProperty(0)
+
 
     def on_start(self):
         self.keyboard_hooker()
@@ -770,11 +772,15 @@ class MainApp(MDApp):
 
     my_stream = None
 
-    def stream_handler(self, message):
+    def stream_handler(self, **message):
         if True:
-            print("La maSIA!!!!!!!!!!!")
+            print(f"{message} La maSIA!!!!!!!!!!!")
             self.opt_sync_contact()
-            return notification.notify(title='New Contact', message='New contact was added')
+            if self.notification_count == 0:
+                self.notification_count += 1
+                return notification.notify(title='App started', message='Lets connect', app_icon='components/icon_contact.png')
+            else:
+                return notification.notify(title='Contact Update', message='New changes in contact', app_icon='components/icon_contact.png')
 
     def notifi(self):
         try:

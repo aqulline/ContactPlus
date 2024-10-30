@@ -189,7 +189,7 @@ class MainApp(MDApp):
         self.user_name = self.user_data['name']
         self.user_email = self.user_data['email']
         self.user_pic = self.user_data['picture'] if self.user_data[
-                                                         'picture'] != '' else f"https://storage.googleapis.com/farmzon-abdcb.appspot.com/Letters/{self.user_name['name'][0]}"
+                                                         'picture'] != '' else f"https://storage.googleapis.com/farmzon-abdcb.appspot.com/Letters/{self.user_name[0]}"
         self.user_qrcode = f"Qrcodes/{self.user_id}.png"
         self.refresh_user_opt()
         self.notifi()
@@ -772,7 +772,7 @@ class MainApp(MDApp):
 
     my_stream = None
 
-    def stream_handler(self, **message):
+    def stream_handler(self, message):
         if True:
             print(f"{message} La maSIA!!!!!!!!!!!")
             self.opt_sync_contact()

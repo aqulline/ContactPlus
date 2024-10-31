@@ -1,11 +1,13 @@
 import json
 
 import firebase_admin
+import qrcode
 from firebase_admin import credentials, initialize_app, db, auth
 from firebase_admin.exceptions import FirebaseError
+from pandas.io.sas.sas_constants import os_name_offset
+
 from beem import sms
-
-
+from offline_database import OfflineDatabase
 
 
 class FirebaseManager:
@@ -14,9 +16,24 @@ class FirebaseManager:
         self.app_initialized = False
         self.database_url = 'https://farmzon-abdcb.firebaseio.com/'
 
+    def offline_qrcode(self, data):
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=10,
+            border=4,
+        )
+
+        qr.add_data(data)
+        qr.make(fit=True)
+        img = qr.make_image(fill_color="black", back_color="#eaf4f4")
+        img.save(f"Qrcodes/offline/{data['sub']}.png")
+        img.save(f"Qrcodes/{data['sub']}.png")
+
     def refresh_user_info(self, user_data):
         filename = 'user_info.json'
         print("Looooooggggggggggs", user_data)
+        self.offline_qrcode(user_data)
         # Write user data to the JSON file
         with open(filename, 'w') as json_file:
             json.dump(user_data, json_file, indent=4)
@@ -407,6 +424,14 @@ class FirebaseManager:
             return {"status": "error", "code": 500,
                     "message": f"An error occurred while setting up the listener: {str(e)}"}
 
+    def sync_contact(self):
+        try:
+            OfflineDatabase.file_name = 'offline_contacts.json'
+            data = OfflineDatabase.load(OfflineDatabase())
+            print("dd", data)
+        except:
+            print("welcome")
+
 # data = {'sub': '114248626444216198151', 'name': 'Aqeglipa Mbuya', 'given_name': 'Aqeglipa', 'family_name': 'Mbuya', 'picture': 'https://lh3.googleusercontent.com/a/ACg8ocIT_d6PJsuw4KxtCBnprPf-jLSjDva0vCP6UJMSmzvE3qnwaEvY=s96-c', 'email': 'aqeglipambuya@gmail.com', 'email_verified': True}
 #
 # FirebaseManager.register_user(FirebaseManager(), data)
@@ -423,4 +448,4 @@ class FirebaseManager:
 
 # x = FirebaseManager.fetch_user_profile(FirebaseManager(), '114248626444216198151')
 # print(x)
-
+FirebaseManager.sync_contact(FirebaseManager())

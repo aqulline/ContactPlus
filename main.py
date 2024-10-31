@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import socket
 import threading
 from time import sleep
 
@@ -31,6 +32,7 @@ from pyzbar.pyzbar import decode
 
 import GoogleKeys
 from database import FirebaseManager as FM
+from offline_database import OfflineDatabase as OF
 
 
 Window.keyboard_anim_args = {"d": .2, "t": "linear"}
@@ -177,6 +179,16 @@ class MainApp(MDApp):
             )
         self.dialog_spin.open()
 
+    def isonline(self):
+        """Check if the device is offline by attempting to connect to a known host."""
+        try:
+            # Attempt to create a socket connection to a known reliable host
+            socket.create_connection(("8.8.8.8", 53), timeout=5)
+            # If connection is successful, device is online
+            return True
+        except OSError:
+            # If there is an error, assume device is offline
+            return False
 
     """
         USER FUNCTIONS (CONTACTS)
@@ -191,6 +203,9 @@ class MainApp(MDApp):
         self.user_pic = self.user_data['picture'] if self.user_data[
                                                          'picture'] != '' else f"https://storage.googleapis.com/farmzon-abdcb.appspot.com/Letters/{self.user_name[0]}"
         self.user_qrcode = f"Qrcodes/{self.user_id}.png"
+        if os.path.exists(f"Qrcodes/offline/{self.user_id}.png"):
+            self.user_qrcode = f"Qrcodes/offline/{self.user_id}.png"
+
         self.refresh_user_opt()
         self.notifi()
 
@@ -638,14 +653,20 @@ class MainApp(MDApp):
 
     def get_data(self):
         print(self.barcode)
-        data = FM.add_contact(FM(), self.user_id, self.barcode)
-        if data['code'] == 200:
-            self.login_start()
-        else:
-            Clock.schedule_once(lambda dt: self.dialog_spin.dismiss(), 0)
-            Clock.schedule_once(lambda dt: self.screen_capture("profile"), 0)
-            Clock.schedule_once(lambda dt: toast(data['message']), 0)
+        OF.update_data(OF(), self.barcode)
+        self.add_contacts()
+        Clock.schedule_once(lambda dt: self.screen_capture("home"), 0)
+        if self.isonline():
+            data = FM.add_contact(FM(), self.user_id, self.barcode['sub'])
+            if data['code'] == 200:
+                self.login_start()
+            else:
+                Clock.schedule_once(lambda dt: self.dialog_spin.dismiss(), 0)
+                Clock.schedule_once(lambda dt: self.screen_capture("profile"), 0)
+                Clock.schedule_once(lambda dt: toast(data['message']), 0)
 
+    def add_local_contact(self):
+        print()
     """
     END OF SCAN QRCODE
     """
@@ -679,7 +700,7 @@ class MainApp(MDApp):
                 )
             self.qr_dialog.open()
         else:
-            toast("Please add phone number below!",None, 3.0)
+            toast("Please add phone number!",None, 3.0)
 
     """
         END OF QRCODES FUNCTIONS

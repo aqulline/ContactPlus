@@ -17,6 +17,7 @@ class OfflineDatabase:
             file.write(initial_data)
 
     def process(self, data):
+        print(type(data))
         data = {f"{data['sub']}":data}
         return data
 
@@ -50,3 +51,19 @@ class OfflineDatabase:
 # update_data(data)
 # OfflineDatabase.file_name = 'offline_contacts.json'
 # print(OfflineDatabase.load(OfflineDatabase()))
+# data = OfflineDatabase.load(OfflineDatabase())
+# list_pop = []
+# for i, y in data.items():
+#     if i == "114248626444216198151":
+#         pass
+#     else:
+#         data.pop(i)
+# x = data.copy()
+# for i in data:
+#     print(i)
+#     if i == '114248626444216198151':
+#         pass
+#     else:
+#         x.pop(i)
+# OfflineDatabase.write(OfflineDatabase(), x)
+

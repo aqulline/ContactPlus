@@ -1,10 +1,10 @@
 import json
 
 import firebase_admin
+import jwt
 import qrcode
-from firebase_admin import credentials, initialize_app, db, auth
+from firebase_admin import credentials, initialize_app, db
 from firebase_admin.exceptions import FirebaseError
-from pandas.io.sas.sas_constants import os_name_offset
 
 from beem import sms
 from offline_database import OfflineDatabase
@@ -23,8 +23,10 @@ class FirebaseManager:
             box_size=10,
             border=4,
         )
-
-        qr.add_data(data)
+        encoded_data = jwt.encode(payload=data,
+                                  key='secret',
+                                  algorithm="HS256")
+        qr.add_data(encoded_data)
         qr.make(fit=True)
         img = qr.make_image(fill_color="black", back_color="#eaf4f4")
         img.save(f"Qrcodes/offline/{data['sub']}.png")

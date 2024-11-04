@@ -37,7 +37,7 @@ version = 0.2
 
 # (list) Application requirements
 # comma separated e.g. requirements = sqlite3,kivy
-requirements = python3, kivy, kivymd==1.2.0, kvdroid, kivyauth, pyjnius, plyer, pillow, requests, openssl, urllib3, httplib2==0.18.1, charset-normalizer, chardet, idna, jwt, cryptography, pyparsing==2.4.7, cachetools, pyasn1, pyasn1-modules, rsa,  protobuf, cachecontrol, requests-toolbelt, oauth2client, python_jwt, jwcrypto, pytz, ratelim, decorator, click, future, googlemaps, firebase-admin, google-auth, google-api-python-client, google-api-core, msgpack, pyzbar, camera4kivy, gestures4kivy, qrcode, typing_extensions, typing-inspect, pypng, hyperlink_preview, beautifulsoup4, dummy_test
+requirements = python3, kivy, kivymd==1.2.0, kvdroid, kivyauth, pyjnius, plyer, pillow, requests, openssl, urllib3, httplib2==0.18.1, charset-normalizer, chardet, idna, PyJWT, cryptography, pyparsing==2.4.7, cachetools, pyasn1, pyasn1-modules, rsa,  protobuf, cachecontrol, requests-toolbelt, oauth2client, python_jwt, jwcrypto, pytz, ratelim, decorator, click, future, googlemaps, firebase-admin, google-auth, google-api-python-client, google-api-core, msgpack, pyzbar, camera4kivy, gestures4kivy, qrcode, typing_extensions, typing-inspect, pypng, hyperlink_preview, beautifulsoup4
 #beautifulsoup4
 
 

@@ -5,7 +5,7 @@ import socket
 import threading
 from time import sleep
 
-import kivy
+import jwt
 import qrcode
 from PIL import Image
 from camera4kivy import Preview
@@ -20,7 +20,6 @@ from kivymd.toast import toast
 from kivyauth.google_auth import initialize_google, login_google, logout_google
 from kivymd.uix.behaviors import RectangularElevationBehavior
 from kivymd.uix.boxlayout import MDBoxLayout
-from kivymd.uix.button import MDFlatButton
 from kivymd.uix.card import MDCard
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.list import OneLineAvatarIconListItem, IRightBodyTouch
@@ -131,10 +130,12 @@ class MainApp(MDApp):
 
     notification_count = NumericProperty(0)
 
+    online_is_yes = False
 
     def on_start(self):
         self.keyboard_hooker()
         Clock.schedule_once(lambda dt: self.login(), .1)
+        Clock.schedule_interval(self.isonline, 4)
         if utils.platform == 'android':
             self.request_android_permissions()
 
@@ -179,15 +180,27 @@ class MainApp(MDApp):
             )
         self.dialog_spin.open()
 
-    def isonline(self):
+    def isonline(self, dt):
         """Check if the device is offline by attempting to connect to a known host."""
+        print("Checking....")
         try:
             # Attempt to create a socket connection to a known reliable host
             socket.create_connection(("8.8.8.8", 53), timeout=5)
             # If connection is successful, device is online
+
+            if not self.online_is_yes:
+                self.local_login_optimization()
+                self.fetch_offline_contacts_opt()
+                self.online_is_yes = True
+                toast("Device online!")
+            # load offline contacts
+            # refresh contacts and other infos
             return True
-        except OSError:
+        except Exception as e:
             # If there is an error, assume device is offline
+            self.online_is_yes = False
+            toast("Device offline!")
+
             return False
 
     """
@@ -245,9 +258,8 @@ class MainApp(MDApp):
             # Write user data to the JSON file
             with open(filename, 'w') as json_file:
                 json.dump(self.user_data, json_file, indent=4)  # Using indent for pretty printing
-
+            OF.update_offline_data(OF(), self.user_data)
             self.qr_code(self.user_data['sub'])
-            print(f"User information has been written to {filename}.")
         else:
             toast(data['message'], 4)
 
@@ -291,6 +303,8 @@ class MainApp(MDApp):
         for x, y in contacts_data.items():
             if y['picture'] == '':
                 y['picture'] = f"https://storage.googleapis.com/farmzon-abdcb.appspot.com/Letters/{y['family_name'][0]}"
+            if not self.online_is_yes:
+                y['picture'] = 'components/account.png'
             self.root.ids.contact.data.append(
                 {
                     "viewclass": "Contacts",
@@ -618,6 +632,23 @@ class MainApp(MDApp):
 
         self.load_contacts_to_ui(data)
 
+    def fetch_offline_contacts_opt(self):
+        thr = threading.Thread(target=self.fetch_offline_contacts)
+        thr.start()
+
+
+    def fetch_offline_contacts(self):
+        OF.file_name = 'offline_contacts.json'
+        data = OF.load(OF())
+        new_data = data.copy()
+        for key in data:
+            if key == self.user_id:
+                pass
+            else:
+                FM.add_contact(FM(), self.user_id, key)
+                new_data.pop(key)
+
+        OF.write(OF(), new_data)
     """
     END OF CONTACT
     """
@@ -636,34 +667,72 @@ class MainApp(MDApp):
 
     @mainthread
     def get_QRcode(self, result):
-        barcode = str(result.data)
+        barcode = result.data
         code_type = str(result.type)
-        print(barcode)
+        print("COde=", barcode)
+
         if barcode:
             if code_type == "QRCODE":
-                barcode = barcode.replace("b", "").replace("'", "")
+                barcode = barcode.decode("utf-8")
 
                 self.barcode = barcode
+                if not self.barcode.count('.') == 2:
+                    toast("Unsupported qrcode!")
+                    self.screen_capture("profile")
 
+                    return
                 self.spin_dialog()
                 # guest_data = FB.search_id(FB(), barcode)
 
                 thr = threading.Thread(target=self.get_data)
                 thr.start()
+            else:
+                toast("Not a QRCODE!")
+                self.screen_capture("profile")
 
     def get_data(self):
         print(self.barcode)
-        OF.update_data(OF(), self.barcode)
-        self.add_contacts()
-        Clock.schedule_once(lambda dt: self.screen_capture("home"), 0)
-        if self.isonline():
-            data = FM.add_contact(FM(), self.user_id, self.barcode['sub'])
-            if data['code'] == 200:
-                self.login_start()
-            else:
-                Clock.schedule_once(lambda dt: self.dialog_spin.dismiss(), 0)
-                Clock.schedule_once(lambda dt: self.screen_capture("profile"), 0)
-                Clock.schedule_once(lambda dt: toast(data['message']), 0)
+        decoded_data = jwt.decode(jwt=self.barcode,
+                                  key='secret',
+                                  algorithms=["HS256"])
+        new_barcode = decoded_data
+        print(new_barcode)
+        if 'sub' in new_barcode:
+            OF.update_data(OF(), new_barcode)
+            self.add_contacts()
+            Clock.schedule_once(lambda dt: self.screen_capture("home"), 0)
+            Clock.schedule_once(lambda dt: self.dialog_spin.dismiss(), 0)
+            self.root.ids.details_scan.disconnect_camera()
+            if self.online_is_yes:
+                data = FM.add_contact(FM(), self.user_id, new_barcode['sub'])
+                if data['code'] == 200:
+                    self.login_start()
+                    self.root.ids.details_scan.disconnect_camera()
+                else:
+                    Clock.schedule_once(lambda dt: self.dialog_spin.dismiss(), 0)
+                    Clock.schedule_once(lambda dt: toast(data['message']), 0)
+                    self.root.ids.details_scan.disconnect_camera()
+        else:
+            Clock.schedule_once(lambda dt: self.dialog_spin.dismiss(), 0)
+            Clock.schedule_once(lambda dt: self.screen_capture('profile'))
+            self.root.ids.details_scan.disconnect_camera()
+
+    def to_json(self, data):
+        data = data.replace("\'", "\"")
+        print(data)
+
+        json_data = data
+
+        cleaned_json_string = json_data.strip('"')
+
+        # Now parse the cleaned string as JSON
+        print(cleaned_json_string)
+
+        json_data = json.loads(cleaned_json_string)
+        print(json_data)
+
+
+        return json_data
 
     def add_local_contact(self):
         print()
@@ -744,6 +813,7 @@ class MainApp(MDApp):
                     self.add_contacts()
                     self.screen_capture("home")
                     # Optionally, you can call a function to proceed to the home screen
+
 
                     self.local_login_optimization()
                     return

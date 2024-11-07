@@ -450,4 +450,4 @@ class FirebaseManager:
 
 # x = FirebaseManager.fetch_user_profile(FirebaseManager(), '114248626444216198151')
 # print(x)
-FirebaseManager.sync_contact(FirebaseManager())
+# FirebaseManager.sync_contact(FirebaseManager())

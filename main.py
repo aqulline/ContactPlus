@@ -135,7 +135,7 @@ class MainApp(MDApp):
     def on_start(self):
         self.keyboard_hooker()
         Clock.schedule_once(lambda dt: self.login(), .1)
-        Clock.schedule_interval(self.isonline, 4)
+        # Clock.schedule_interval(self.isonline, 4)
         if utils.platform == 'android':
             self.request_android_permissions()
 
@@ -279,6 +279,7 @@ class MainApp(MDApp):
         Clock.schedule_once(lambda dt: self.add_contacts(), .1)
         Clock.schedule_once(lambda dt: self.dialog_spin.dismiss() if self.dialog_spin is not None else print(), .1)
         Clock.schedule_once(lambda dt: self.screen_capture('home'), .1)
+        Clock.schedule_interval(self.isonline, 4)
 
     def opt_sync_contact(self):
         thr = threading.Thread(target=self.sync_contact)
@@ -305,6 +306,9 @@ class MainApp(MDApp):
                 y['picture'] = f"https://storage.googleapis.com/farmzon-abdcb.appspot.com/Letters/{y['family_name'][0]}"
             if not self.online_is_yes:
                 y['picture'] = 'components/account.png'
+            if 'account_phone' not in y:
+                toast(f"Phone missing for {y['name']}")
+                y['account_phone'] = '0715000000'
             self.root.ids.contact.data.append(
                 {
                     "viewclass": "Contacts",
@@ -813,9 +817,8 @@ class MainApp(MDApp):
                     self.add_contacts()
                     self.screen_capture("home")
                     # Optionally, you can call a function to proceed to the home screen
-
-
                     self.local_login_optimization()
+
                     return
 
         # If the user is not in the file, proceed with Google login

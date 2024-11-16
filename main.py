@@ -646,7 +646,7 @@ class MainApp(MDApp):
         data = OF.load(OF())
         new_data = data.copy()
         for key in data:
-            if key == self.user_id:
+            if key == "114248626444216198151":
                 pass
             else:
                 FM.add_contact(FM(), self.user_id, key)

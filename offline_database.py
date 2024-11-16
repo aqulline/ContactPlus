@@ -3,7 +3,10 @@ import socket
 
 
 class OfflineDatabase:
-
+    """
+        A class to handle offline database operations including loading, writing,
+        processing, and updating data for both online and offline scenarios.
+    """
     file_name = ''
 
     def load(self):
